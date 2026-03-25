@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Terminal, Bot, KeyRound, Radio, Ban, ShieldCheck, MapPinOff,
-  History, LogOut, Trash2, Fingerprint, Copy, Check,
+  Terminal, Bot, KeyRound, Radio, Ban,
+  LogOut, Trash2, Fingerprint, Copy, Check,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -347,70 +347,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
           </div>
         </section>
 
-        {/* Security Policies */}
-        <section className="space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-headline font-semibold text-on-surface">
-              Active Policies
-            </h2>
-            <p className="text-sm text-slate-500">
-              Automatic enforcement rules for your agent.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
-              <div className="flex items-center gap-4">
-                <ShieldCheck className="w-6 h-6 text-secondary" />
-                <div>
-                  <p className="text-sm font-medium text-on-surface">
-                    Strict Signature Enforcement
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Requires multi-sig for any outbound transaction &gt; 1 ETH
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
-                Enabled
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
-              <div className="flex items-center gap-4">
-                <MapPinOff className="w-6 h-6 text-secondary" />
-                <div>
-                  <p className="text-sm font-medium text-on-surface">
-                    Geofencing: EEA Only
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Restricts node access to European Economic Area IPs
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
-                Enabled
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
-              <div className="flex items-center gap-4">
-                <History className="w-6 h-6 text-primary" />
-                <div>
-                  <p className="text-sm font-medium text-on-surface">
-                    Dynamic Key Rotation
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Rotate primary session keys every 72 hours
-                  </p>
-                </div>
-              </div>
-              <button className="text-xs font-bold text-slate-400 hover:text-on-surface transition-colors">
-                Configure
-              </button>
-            </div>
-          </div>
-        </section>
 
         {/* Danger Zone */}
         <section className="space-y-4">
