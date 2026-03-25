@@ -254,296 +254,182 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
   const busy = approving || rejecting;
 
   return (
-    <div className="animate-in fade-in duration-500">
-      {/* Back Action */}
+    <div className="animate-in fade-in duration-500 space-y-6">
+      {/* Back */}
       <button
         onClick={onBack}
-        className="mb-8 flex items-center gap-2 text-slate-400 cursor-pointer group w-fit hover:text-on-surface transition-colors"
+        className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group"
       >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        <span className="font-label text-sm font-medium">Return to Queue</span>
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+        Return to Queue
       </button>
 
-      {/* Hero Status Card */}
-      <section className="relative overflow-hidden rounded-3xl p-8 bg-surface-container-low ghost-border shadow-2xl mb-8">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -mr-32 -mt-32" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+      {/* Status Header */}
+      <div className="relative bg-surface-container-low rounded-3xl p-6 ghost-border overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[100px] -mr-16 -mt-16 pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
-              <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.2em]`}>{sc.label}</span>
+              <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.15em]`}>{sc.label}</span>
             </div>
-            <h1 className="text-4xl font-headline font-bold text-on-surface tracking-tight mb-2 capitalize">
+            <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
               {approval.amount
                 ? `${approval.action.replace(/_/g, ' ')} ${Number(approval.amount).toLocaleString()}${approval.currency ? ` ${approval.currency}` : ''}`
                 : approval.action.replace(/_/g, ' ')}
             </h1>
-            {approval.agent_intent ? (
-              <p className="text-on-surface-variant max-w-md">{approval.agent_intent}</p>
-            ) : approval.memo ? (
-              <p className="text-on-surface-variant max-w-md">{approval.memo}</p>
-            ) : null}
+            {(approval.agent_intent || approval.memo) && (
+              <p className="text-sm text-on-surface-variant">{approval.agent_intent || approval.memo}</p>
+            )}
           </div>
 
-          {/* Timer — shown for pending with expires_at; resolved badge for others */}
           {isPending && approval.expires_at ? (
-            <div className="flex flex-col items-center justify-center p-6 bg-surface-container-high rounded-2xl border border-secondary/30 min-w-[180px] shadow-[0_0_30px_rgba(93,230,255,0.1)]">
-              <span className="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-bold mb-1">Expires In</span>
-              <span className="text-4xl font-headline font-black text-secondary tabular-nums drop-shadow-[0_0_10px_rgba(93,230,255,0.4)]">
-                {timeRemaining?.display ?? '--:--'}
-              </span>
-              <div className="w-full bg-surface-container-low h-1.5 rounded-full mt-4 overflow-hidden">
-                <div
-                  className="bg-secondary h-full shadow-[0_0_10px_#5de6ff] transition-all duration-1000"
-                  style={{ width: `${progress * 100}%` }}
-                />
+            <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-high rounded-xl border border-secondary/20 flex-shrink-0">
+              <Clock className="w-4 h-4 text-secondary" />
+              <div>
+                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">Expires</p>
+                <p className="text-lg font-headline font-black text-secondary tabular-nums">{timeRemaining?.display ?? '--:--'}</p>
+              </div>
+              <div className="w-16 bg-surface-container-low h-1 rounded-full overflow-hidden">
+                <div className="bg-secondary h-full transition-all duration-1000" style={{ width: `${progress * 100}%` }} />
               </div>
             </div>
           ) : !isPending ? (
-            <div className={`flex flex-col items-center justify-center px-8 py-6 rounded-2xl bg-surface-container-high border ${
-              approval.status === 'approved' ? 'border-green-500/30' :
-              approval.status === 'rejected' ? 'border-red-500/30' : 'border-slate-500/30'
-            }`}>
-              <Clock className="w-5 h-5 text-slate-400 mb-2" />
-              <p className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">Resolved</p>
-              <p className="text-sm font-semibold text-on-surface">
-                {new Date(approval.created_at).toLocaleString(undefined, {
-                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-                })}
+            <div className="flex items-center gap-2 px-4 py-3 bg-surface-container-high rounded-xl flex-shrink-0">
+              <Clock className="w-4 h-4 text-on-surface-variant" />
+              <p className="text-sm text-on-surface-variant">
+                {new Date(approval.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           ) : null}
         </div>
-      </section>
-
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Transaction Context */}
-          <div className="p-6 rounded-2xl bg-surface-container-low ghost-border">
-            <h3 className="font-headline font-bold text-lg mb-6 flex items-center gap-2">
-              <Info className="w-5 h-5 text-primary fill-primary/20" />
-              Transaction Context
-            </h3>
-            <div className="space-y-6">
-              {approval.agent_name && (
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 border border-white/5">
-                    <Bot className="w-6 h-6 text-secondary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-on-surface uppercase tracking-wider mb-1">Agent</p>
-                    <p className="text-sm text-on-surface-variant leading-relaxed">{approval.agent_name}</p>
-                    {approval.agent_intent && (
-                      <p className="text-sm text-on-surface-variant leading-relaxed mt-1">{approval.agent_intent}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {approval.to_address && (
-                <div className={`flex gap-4 ${approval.agent_name ? 'pt-6 border-t border-outline-variant/10' : ''}`}>
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 border border-white/5">
-                    <Key className="w-6 h-6 text-secondary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-on-surface uppercase tracking-wider mb-1">Destination</p>
-                    <p className="text-sm text-on-surface-variant font-mono break-all">
-                      {approval.destination_label && (
-                        <span className="font-sans font-semibold text-on-surface block mb-0.5">
-                          {approval.destination_label}
-                        </span>
-                      )}
-                      {approval.to_address}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Fallback row when neither agent nor address is set */}
-              {!approval.agent_name && !approval.to_address && (
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 border border-white/5">
-                    <Info className="w-6 h-6 text-secondary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-on-surface uppercase tracking-wider mb-1">Action</p>
-                    <p className="text-sm text-on-surface-variant capitalize">{approval.action.replace(/_/g, ' ')}</p>
-                    {approval.memo && <p className="text-sm text-on-surface-variant mt-1">{approval.memo}</p>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Risk Assessment */}
-          {approval.risk_level && (
-            <div className="p-8 rounded-2xl glass-panel border border-primary/20 relative overflow-hidden group shadow-xl">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-tertiary group-hover:w-2.5 transition-all" />
-              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 mb-6">Security Intelligence</p>
-
-              <div className="flex items-center gap-6 mb-8">
-                <div className={`w-20 h-20 rounded-full border-4 ${riskColorClass(approval.risk_level)} flex items-center justify-center relative`}>
-                  <div className={`absolute inset-0 border-4 ${riskBorderFull(approval.risk_level)} rounded-full clip-path-75 animate-pulse`} />
-                  <span className={`text-xl font-headline font-black ${riskColorClass(approval.risk_level).split(' ')[0]}`}>
-                    {riskLabel(approval.risk_level)}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-xl text-on-surface">{riskTitle(approval.risk_level)}</h4>
-                  {approval.risk_details?.[0] && (
-                    <p className="text-sm text-on-surface-variant">{approval.risk_details[0]}</p>
-                  )}
-                </div>
-              </div>
-
-              {approval.risk_details && approval.risk_details.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {approval.risk_details.map((detail, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                      {approval.risk_level === 'low' ? (
-                        <CheckCircle2 className="w-4 h-4 text-secondary shrink-0" />
-                      ) : approval.risk_level === 'high' ? (
-                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-tertiary shrink-0" />
-                      )}
-                      <span className="text-xs text-on-surface-variant">{detail}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Destination address bento */}
-          <div className="space-y-4">
-            {(approval.destination_label || approval.destination_address || approval.to_address) && (
-              <div className="p-6 rounded-2xl bg-surface-container-low ghost-border">
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 mb-4">Destination Address</p>
-                <div className="flex items-center gap-4 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-white/10 shrink-0">
-                    <Key className="w-5 h-5 text-secondary" />
-                  </div>
-                  <div className="min-w-0">
-                    {approval.destination_label && (
-                      <span className="font-headline font-bold text-on-surface block truncate">{approval.destination_label}</span>
-                    )}
-                    <p className="text-xs text-on-surface-variant font-mono mt-0.5 break-all">
-                      {approval.destination_address ?? approval.to_address}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {approval.network_fee && (
-              <div className="p-6 rounded-2xl bg-surface-container-low ghost-border">
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 mb-4">Network Logistics</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-5 h-5 text-tertiary" />
-                    <span className="font-headline font-bold text-on-surface">{approval.network_fee}</span>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 text-[10px] text-secondary font-black uppercase tracking-widest">
-                    Network Fee
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {approval.tx_hash && (
-              <div className="p-6 rounded-2xl bg-surface-container-low ghost-border">
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 mb-2">Transaction Hash</p>
-                <p className="text-xs font-mono text-primary break-all">{approval.tx_hash}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Action Panel */}
-          {isPending ? (
-            <div className="p-8 rounded-3xl bg-surface-container-high border border-white/5 shadow-2xl space-y-4 relative">
-              <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <h4 className="text-xs font-bold text-center text-slate-500 uppercase tracking-[0.3em] mb-4">
-                Biometric Verification Required
-              </h4>
-
-              <button
-                onClick={handleApprove}
-                disabled={busy}
-                className="w-full py-5 rounded-2xl primary-gradient text-white font-black flex flex-col items-center justify-center gap-2 shadow-[0_10px_40px_rgba(124,58,237,0.4)] hover:shadow-[0_15px_50px_rgba(124,58,237,0.6)] hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_10px_40px_rgba(124,58,237,0.4)]"
-              >
-                {approving ? (
-                  <>
-                    <Loader2 className="w-8 h-8 mb-1 animate-spin" />
-                    <span className="uppercase tracking-widest text-sm">Verifying...</span>
-                  </>
-                ) : (
-                  <>
-                    <Fingerprint className="w-8 h-8 mb-1" />
-                    <span className="uppercase tracking-widest text-sm">Authorize with Passkey</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleReject}
-                disabled={busy}
-                className="w-full py-4 rounded-xl bg-surface-container border border-outline-variant/20 text-error/80 hover:text-error hover:bg-error/10 hover:border-error/30 active:scale-95 transition-all duration-200 font-bold uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {rejecting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Rejecting...
-                  </>
-                ) : 'Reject Transaction'}
-              </button>
-
-              <p className="text-[9px] text-center text-slate-500 uppercase tracking-widest leading-relaxed">
-                By authorizing, you confirm that this agent action <br /> aligns with your defined risk parameters.
-              </p>
-            </div>
-          ) : (
-            /* Resolved state panel */
-            <div className="p-8 rounded-3xl bg-surface-container-high border border-white/5 shadow-2xl relative">
-              <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-outline-variant/40 to-transparent" />
-              <div className={`flex flex-col items-center gap-3 py-4 rounded-2xl ${
-                approval.status === 'approved'
-                  ? 'bg-green-500/5 border border-green-500/20'
-                  : approval.status === 'rejected'
-                  ? 'bg-red-500/5 border border-red-500/20'
-                  : 'bg-slate-500/5 border border-slate-500/20'
-              }`}>
-                <CheckCircle2 className={`w-10 h-10 ${
-                  approval.status === 'approved' ? 'text-green-400' :
-                  approval.status === 'rejected' ? 'text-red-400' : 'text-slate-400'
-                }`} />
-                <p className="font-headline font-bold text-on-surface capitalize">
-                  {approval.status === 'approved' ? 'Transaction Authorized' :
-                   approval.status === 'rejected' ? 'Transaction Rejected' : 'Request Expired'}
-                </p>
-                <p className="text-xs text-on-surface-variant text-center">
-                  {approval.status === 'approved'
-                    ? 'This transaction was approved and executed.'
-                    : approval.status === 'rejected'
-                    ? 'This transaction was rejected and will not be executed.'
-                    : 'The authorization window has closed for this request.'}
-                </p>
-              </div>
-              <button
-                onClick={onBack}
-                className="mt-4 w-full py-3 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 text-sm font-medium"
-              >
-                Back to Approvals
-              </button>
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Details */}
+      <div className="space-y-4">
+        {/* Context rows */}
+        <div className="bg-surface-container-low rounded-2xl ghost-border divide-y divide-outline-variant/10">
+          {approval.agent_name && (
+            <div className="flex items-start gap-3 p-4">
+              <Bot className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Agent</p>
+                <p className="text-sm text-on-surface">{approval.agent_name}</p>
+                {approval.agent_intent && <p className="text-xs text-on-surface-variant mt-1">{approval.agent_intent}</p>}
+              </div>
+            </div>
+          )}
+
+          {approval.to_address && (
+            <div className="flex items-start gap-3 p-4">
+              <Key className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Destination</p>
+                {approval.destination_label && <p className="text-sm text-on-surface font-medium">{approval.destination_label}</p>}
+                <p className="text-xs text-on-surface-variant font-mono break-all">{approval.to_address}</p>
+              </div>
+            </div>
+          )}
+
+          {!approval.agent_name && !approval.to_address && (
+            <div className="flex items-start gap-3 p-4">
+              <Info className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Action</p>
+                <p className="text-sm text-on-surface capitalize">{approval.action.replace(/_/g, ' ')}</p>
+                {approval.memo && <p className="text-xs text-on-surface-variant mt-1">{approval.memo}</p>}
+              </div>
+            </div>
+          )}
+
+          {approval.network_fee && (
+            <div className="flex items-start gap-3 p-4">
+              <Zap className="w-5 h-5 text-tertiary mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Network Fee</p>
+                <p className="text-sm text-on-surface font-mono">{approval.network_fee}</p>
+              </div>
+            </div>
+          )}
+
+          {approval.tx_hash && (
+            <div className="flex items-start gap-3 p-4">
+              <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">TX Hash</p>
+                <p className="text-xs text-primary font-mono break-all">{approval.tx_hash}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Risk Assessment — compact */}
+        {approval.risk_level && (
+          <div className="bg-surface-container-low rounded-2xl ghost-border p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-8 h-8 rounded-full border-2 ${riskColorClass(approval.risk_level)} flex items-center justify-center`}>
+                <span className={`text-[10px] font-black ${riskColorClass(approval.risk_level).split(' ')[0]}`}>{riskLabel(approval.risk_level)}</span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-on-surface">{riskTitle(approval.risk_level)}</p>
+              </div>
+            </div>
+            {approval.risk_details && approval.risk_details.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {approval.risk_details.map((detail, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-high text-xs text-on-surface-variant">
+                    {approval.risk_level === 'low' ? <CheckCircle2 className="w-3 h-3 text-secondary" /> : <AlertTriangle className="w-3 h-3 text-tertiary" />}
+                    {detail}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      {isPending ? (
+        <div className="bg-surface-container-high rounded-2xl ghost-border p-5 space-y-3">
+          <button
+            onClick={handleApprove}
+            disabled={busy}
+            className="w-full py-3.5 rounded-xl primary-gradient text-white font-bold flex items-center justify-center gap-2 shadow-[0_8px_30px_rgba(124,58,237,0.3)] hover:shadow-[0_12px_40px_rgba(124,58,237,0.5)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            {approving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Fingerprint className="w-5 h-5" />}
+            {approving ? 'Verifying...' : 'Authorize with Passkey'}
+          </button>
+          <button
+            onClick={handleReject}
+            disabled={busy}
+            className="w-full py-3 rounded-xl bg-surface-container border border-outline-variant/20 text-error/80 hover:text-error hover:bg-error/10 hover:border-error/30 active:scale-[0.98] transition-all text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {rejecting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {rejecting ? 'Rejecting...' : 'Reject Transaction'}
+          </button>
+          <p className="text-[9px] text-center text-on-surface-variant uppercase tracking-widest">
+            By authorizing, you confirm this action aligns with your risk parameters.
+          </p>
+        </div>
+      ) : (
+        <div className={`rounded-2xl ghost-border p-5 flex flex-col items-center gap-3 ${
+          approval.status === 'approved' ? 'bg-green-500/5 border-green-500/20' :
+          approval.status === 'rejected' ? 'bg-red-500/5 border-red-500/20' :
+          'bg-surface-container-high'
+        }`}>
+          <CheckCircle2 className={`w-8 h-8 ${
+            approval.status === 'approved' ? 'text-green-400' :
+            approval.status === 'rejected' ? 'text-red-400' : 'text-slate-400'
+          }`} />
+          <p className="font-headline font-bold text-on-surface text-sm capitalize">
+            {approval.status === 'approved' ? 'Transaction Authorized' :
+             approval.status === 'rejected' ? 'Transaction Rejected' : 'Request Expired'}
+          </p>
+          <button onClick={onBack} className="px-6 py-2 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface text-sm font-medium transition-all">
+            Back to Approvals
+          </button>
+        </div>
+      )}
     </div>
   );
 }
