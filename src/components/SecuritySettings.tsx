@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Terminal, Bot, KeyRound, Radio, Ban, ShieldCheck, MapPinOff,
-  History, Laptop, Smartphone, LogOut, Trash2, Fingerprint, Copy, Check,
+  History, LogOut, Trash2, Fingerprint, Copy, Check,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -347,133 +347,95 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
           </div>
         </section>
 
-        {/* Security Policies & Session Management Grid */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Active Policies */}
-          <div className="space-y-6 lg:col-span-7">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-headline font-semibold text-on-surface">
-                Active Policies
-              </h2>
-              <p className="text-sm text-slate-500">
-                Automatic enforcement rules for your agent.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-              <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
-                <div className="flex items-center gap-4">
-                  <ShieldCheck className="w-6 h-6 text-secondary" />
-                  <div>
-                    <p className="text-sm font-medium text-on-surface">
-                      Strict Signature Enforcement
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Requires multi-sig for any outbound transaction &gt; 1 ETH
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
-                  Enabled
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
-                <div className="flex items-center gap-4">
-                  <MapPinOff className="w-6 h-6 text-secondary" />
-                  <div>
-                    <p className="text-sm font-medium text-on-surface">
-                      Geofencing: EEA Only
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Restricts node access to European Economic Area IPs
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
-                  Enabled
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
-                <div className="flex items-center gap-4">
-                  <History className="w-6 h-6 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium text-on-surface">
-                      Dynamic Key Rotation
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Rotate primary session keys every 72 hours
-                    </p>
-                  </div>
-                </div>
-                <button className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
-                  Configure
-                </button>
-              </div>
-            </div>
+        {/* Security Policies */}
+        <section className="space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-headline font-semibold text-on-surface">
+              Active Policies
+            </h2>
+            <p className="text-sm text-slate-500">
+              Automatic enforcement rules for your agent.
+            </p>
           </div>
 
-          {/* Session Management */}
-          <div className="space-y-6 lg:col-span-5">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-headline font-semibold text-on-surface">
-                Session Management
-              </h2>
-              <p className="text-sm text-slate-500">
-                Current active access points to this vault.
-              </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
+              <div className="flex items-center gap-4">
+                <ShieldCheck className="w-6 h-6 text-secondary" />
+                <div>
+                  <p className="text-sm font-medium text-on-surface">
+                    Strict Signature Enforcement
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Requires multi-sig for any outbound transaction &gt; 1 ETH
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
+                Enabled
+              </span>
             </div>
 
-            <div className="bg-surface-container-low rounded-2xl ghost-border overflow-hidden">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Laptop className="w-6 h-6 text-slate-400" />
-                  <div>
-                    <p className="text-sm font-medium">MacBook Pro 16" — London, UK</p>
-                    <p className="text-xs text-secondary">Current Session</p>
-                  </div>
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
+              <div className="flex items-center gap-4">
+                <MapPinOff className="w-6 h-6 text-secondary" />
+                <div>
+                  <p className="text-sm font-medium text-on-surface">
+                    Geofencing: EEA Only
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Restricts node access to European Economic Area IPs
+                  </p>
                 </div>
-                <button className="text-xs font-bold text-slate-500 hover:text-error transition-colors">
-                  Terminate
-                </button>
               </div>
+              <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
+                Enabled
+              </span>
+            </div>
 
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Smartphone className="w-6 h-6 text-slate-400" />
-                  <div>
-                    <p className="text-sm font-medium">iPhone 15 Pro — Paris, FR</p>
-                    <p className="text-xs text-slate-500">Last active 4 hours ago</p>
-                  </div>
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl ghost-border">
+              <div className="flex items-center gap-4">
+                <History className="w-6 h-6 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-on-surface">
+                    Dynamic Key Rotation
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Rotate primary session keys every 72 hours
+                  </p>
                 </div>
-                <button className="text-xs font-bold text-slate-500 hover:text-error transition-colors">
-                  Terminate
-                </button>
               </div>
+              <button className="text-xs font-bold text-slate-400 hover:text-on-surface transition-colors">
+                Configure
+              </button>
+            </div>
+          </div>
+        </section>
 
-              <div className="p-6 bg-error/5 flex flex-col gap-4">
-                <p className="text-xs text-error/80 uppercase tracking-widest font-bold">
-                  Danger Zone
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={handleLogoutGlobal}
-                    disabled={dangerLoading}
-                    className="px-4 py-2 rounded-lg bg-surface-container-highest text-sm font-medium text-on-surface hover:bg-white/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {dangerLoading ? 'Working…' : 'Logout Global'}
-                  </button>
-                  <button
-                    onClick={handleDeleteAccount}
-                    disabled={dangerLoading}
-                    className="px-4 py-2 rounded-lg border border-error/20 text-sm font-medium text-error hover:bg-error/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete Account
-                  </button>
-                </div>
+        {/* Danger Zone */}
+        <section className="space-y-4">
+          <div className="bg-surface-container-low rounded-2xl ghost-border overflow-hidden">
+            <div className="p-6 bg-error/5 flex flex-col gap-4">
+              <p className="text-xs text-error/80 uppercase tracking-widest font-bold">
+                Danger Zone
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleLogoutGlobal}
+                  disabled={dangerLoading}
+                  className="px-4 py-2 rounded-lg bg-surface-container-highest text-sm font-medium text-on-surface hover:bg-surface-variant transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {dangerLoading ? 'Working…' : 'Logout Global'}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={dangerLoading}
+                  className="px-4 py-2 rounded-lg border border-error/20 text-sm font-medium text-error hover:bg-error/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Account
+                </button>
               </div>
             </div>
           </div>

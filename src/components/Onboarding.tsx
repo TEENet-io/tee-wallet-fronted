@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Key, AtSign, Fingerprint, LogIn, Loader2 } from 'lucide-react';
+import { Shield, Key, Fingerprint, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface OnboardingProps {
@@ -10,12 +10,11 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
   const { login, register, loading } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
 
   const [registered, setRegistered] = useState(false);
 
   async function handleRegister() {
-    const name = displayName.trim() || inviteCode.trim();
+    const name = displayName.trim();
     if (!name) return;
     const ok = await register(name);
     if (ok) setRegistered(true);
@@ -50,21 +49,20 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Registration Details */}
           <div className="lg:col-span-7 space-y-6 order-2 lg:order-1">
-            {/* Invite Code Section */}
+            {/* Display Name Section */}
             <section className="glass-panel p-6 md:p-8 rounded-[2rem] ghost-border glow-primary transition-all hover:border-white/10">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
-                  <h2 className="font-headline font-bold text-xl text-secondary">Enter Invite Code</h2>
-                  <p className="text-slate-500 text-sm">OpenClaw is currently in private beta.</p>
+                  <h2 className="font-headline font-bold text-xl text-secondary">Your Identity</h2>
+                  <p className="text-slate-500 text-sm">Enter your name or email to register.</p>
                 </div>
                 <div className="relative flex-grow md:max-w-xs">
                   <input
-                    id="reg-display-name"
-                    className="w-full bg-surface-container-lowest border-b border-outline-variant/30 text-on-surface p-4 font-headline tracking-widest uppercase focus:border-secondary focus:ring-0 transition-all outline-none"
-                    placeholder="CLAW-XXXX-XXXX"
+                    className="w-full bg-surface-container-lowest border-b border-outline-variant/30 text-on-surface p-4 font-body focus:border-secondary focus:ring-0 transition-all outline-none"
+                    placeholder="alice@example.com"
                     type="text"
-                    value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value)}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
                     disabled={loading}
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -74,42 +72,6 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
               </div>
             </section>
 
-            {/* Username Check Section */}
-            <section className="glass-panel p-6 md:p-8 rounded-[2rem] ghost-border space-y-6 transition-all hover:border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <AtSign className="w-4 h-4 text-primary" />
-                    <h2 className="font-headline font-semibold text-lg">Claim Identity</h2>
-                  </div>
-                  <p className="text-slate-500 text-xs">Choose your unique agent handle.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                <div className="relative">
-                  <input
-                    className="w-full bg-surface-container-lowest/50 border-b border-outline-variant/20 text-on-surface p-3 font-body focus:border-primary focus:ring-0 transition-all outline-none"
-                    placeholder="username"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    disabled={loading}
-                  />
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <span className="text-[10px] text-secondary font-bold tracking-tighter uppercase px-2 py-0.5 rounded bg-secondary/10">
-                      Checking
-                    </span>
-                    <div className="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
-                  </div>
-                </div>
-                <button
-                  className="w-full py-3 rounded-xl border border-secondary/20 text-secondary font-label text-xs uppercase tracking-widest hover:bg-secondary/5 transition-all"
-                  type="button"
-                >
-                  Check Availability
-                </button>
-              </div>
-            </section>
           </div>
 
           {/* Right Column: Primary Call to Action */}
@@ -125,7 +87,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
               <div className="mt-10 lg:mt-auto relative z-10 w-full space-y-3">
                 <button
                   onClick={handleRegister}
-                  disabled={loading || (!displayName.trim() && !inviteCode.trim())}
+                  disabled={loading || !displayName.trim()}
                   className="w-full bg-white text-primary-container font-bold font-headline py-4 lg:py-5 rounded-xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:shadow-xl hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   {loading ? (

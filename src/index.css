@@ -30,6 +30,52 @@
   --font-label: "Inter", sans-serif;
 }
 
+/* Light theme overrides */
+:root.light {
+  --color-primary: #6d28d9;
+  --color-primary-container: #ede0ff;
+  --color-on-primary-container: #4c1d95;
+  --color-secondary: #0891b2;
+  --color-tertiary: #d97706;
+
+  --color-surface: #f8f9fc;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f3f9;
+  --color-surface-container: #ebedf5;
+  --color-surface-container-high: #e2e4ee;
+  --color-surface-container-highest: #d8dae6;
+  --color-surface-variant: #e2e4ee;
+
+  --color-on-surface: #1a1c2e;
+  --color-on-surface-variant: #44465a;
+
+  --color-outline: #76788c;
+  --color-outline-variant: #c4c5d6;
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+}
+
+:root.light .glass-panel {
+  backdrop-filter: blur(20px);
+  background: rgba(241, 243, 249, 0.8);
+}
+
+:root.light .ghost-border {
+  border: 1px solid rgba(118, 120, 140, 0.15);
+}
+
+:root.light .shimmer {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+:root.light body {
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
 body {
   background-color: var(--color-surface);
   color: var(--color-on-surface);
