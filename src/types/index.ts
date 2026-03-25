@@ -63,7 +63,10 @@ export interface Approval {
 export interface AuditLog {
   id: string;
   action: string;
-  detail?: string;
+  details?: string;
+  auth_mode?: string;
+  status?: string;
+  wallet_id?: string;
   ip?: string;
   created_at: string;
 }

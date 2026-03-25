@@ -88,6 +88,26 @@ interface LogRowProps {
   log: AuditLog;
 }
 
+function DetailBlock({ details }: { details: string }) {
+  try {
+    const obj = JSON.parse(details);
+    const entries = Object.entries(obj);
+    if (entries.length === 0) return <p className="text-sm text-on-surface-variant">{details}</p>;
+    return (
+      <div className="space-y-0.5">
+        {entries.map(([k, v]) => (
+          <p key={k} className="text-sm leading-snug">
+            <span className="text-on-surface-variant">{k}: </span>
+            <span className="text-on-surface font-mono text-xs break-all">{String(v)}</span>
+          </p>
+        ))}
+      </div>
+    );
+  } catch {
+    return <p className="text-sm text-on-surface leading-snug break-words">{details}</p>;
+  }
+}
+
 function LogRow({ log }: LogRowProps) {
   return (
     <div className="flex items-start gap-4 px-5 py-4 group hover:bg-surface-container-high/50 transition-colors duration-150 rounded-xl">
@@ -98,10 +118,13 @@ function LogRow({ log }: LogRowProps) {
 
       {/* Detail */}
       <div className="flex-1 min-w-0">
-        {log.detail ? (
-          <p className="text-sm text-on-surface leading-snug break-words">{log.detail}</p>
+        {log.details ? (
+          <DetailBlock details={log.details} />
         ) : (
-          <p className="text-sm text-on-surface-variant italic">No detail recorded</p>
+          <p className="text-sm text-on-surface-variant italic capitalize">{log.action.replace(/_/g, ' ')}</p>
+        )}
+        {log.auth_mode && (
+          <span className="text-[10px] text-outline font-mono mt-1 inline-block">{log.auth_mode}</span>
         )}
       </div>
 
@@ -116,6 +139,9 @@ function LogRow({ log }: LogRowProps) {
             second: '2-digit',
           })}
         </p>
+        {log.status && (
+          <span className={`text-[10px] font-bold uppercase ${log.status === 'success' ? 'text-green-400' : 'text-error'}`}>{log.status}</span>
+        )}
         {log.ip && (
           <p className="text-[11px] text-slate-500 font-mono">{log.ip}</p>
         )}
