@@ -25,11 +25,15 @@ export interface Wallet {
 }
 
 export interface AllowedContract {
-  id: string;
+  id: number;
   wallet_id: string;
-  address: string;
+  contract_address: string;
   label: string;
-  abi_hint?: string;
+  symbol?: string;
+  decimals?: number;
+  allowed_methods?: string;
+  auto_approve?: boolean;
+  created_at?: string;
 }
 
 export interface WalletPolicy {

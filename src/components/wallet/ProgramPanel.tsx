@@ -77,7 +77,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
   async function handleRemove(contract: AllowedContract) {
     const ok = await confirm({
       title: 'Remove Program',
-      message: `Remove "${contract.label || truncateAddr(contract.address)}" from the whitelist?`,
+      message: `Remove "${contract.label || truncateAddr(contract.contract_address)}" from the whitelist?`,
       confirmText: 'Remove',
       danger: true,
     });
@@ -102,7 +102,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
     try {
       const res = await api(`/api/wallets/${walletId}/contracts`, {
         method: 'POST',
-        body: JSON.stringify({ address: program.address, label: program.label, abi_hint: program.abi_hint }),
+        body: JSON.stringify({ contract_address: program.address, label: program.label, symbol: program.abi_hint }),
       });
       if (res.success) {
         toast(`${program.label} added`, 'success');
@@ -124,9 +124,9 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
       const res = await api(`/api/wallets/${walletId}/contracts`, {
         method: 'POST',
         body: JSON.stringify({
-          address: newAddress.trim(),
+          contract_address: newAddress.trim(),
           label: newLabel.trim() || 'Custom Contract',
-          abi_hint: newAbiHint.trim() || undefined,
+          symbol: newAbiHint.trim() || undefined,
         }),
       });
       if (res.success) {
@@ -145,7 +145,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
   }
 
   // Contracts already in whitelist (by address)
-  const whitelistedAddresses = new Set(contracts.map(c => c.address.toLowerCase()));
+  const whitelistedAddresses = new Set(contracts.map(c => c.contract_address.toLowerCase()));
   const availableDefaults = DEFAULT_PROGRAMS.filter(p => !whitelistedAddresses.has(p.address.toLowerCase()));
 
   return (
@@ -284,13 +284,13 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-bold text-on-surface">{contract.label || 'Unnamed'}</p>
-                      {contract.abi_hint && (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor(contract.abi_hint)}`}>
-                          {contract.abi_hint}
+                      {contract.symbol && (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor(contract.symbol)}`}>
+                          {contract.symbol}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-on-surface-variant font-mono mt-0.5">{truncateAddr(contract.address)}</p>
+                    <p className="text-xs text-on-surface-variant font-mono mt-0.5">{truncateAddr(contract.contract_address)}</p>
                   </div>
 
                   {/* Actions */}

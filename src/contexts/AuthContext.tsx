@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { api, setSession, clearSession, getSessionToken } from '../lib/api';
 import { normalizeOptions, credentialToJSON } from '../lib/passkey';
 import { useToast } from './ToastContext';
@@ -28,6 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   const isAuthenticated = !!user && !!getSessionToken();
+
+  // Listen for session expiry from api.ts (401 response)
+  useEffect(() => {
+    const handler = () => {
+      setUser(null);
+      toast('Session expired. Please log in again.', 'error');
+    };
+    window.addEventListener('session-expired', handler);
+    return () => window.removeEventListener('session-expired', handler);
+  }, [toast]);
 
   // ── Login: matches old passkeyLogin() exactly ──
   const login = useCallback(async () => {
@@ -118,7 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     toast('Logged out');
   }, [toast]);
 
-  // Get a fresh passkey credential for sensitive operations
+  // Get a fresh passkey credential for sensitive operations.
+  // Returns { login_session_id, credential } WITHOUT verifying first —
+  // the calling API endpoint (e.g. apikey/generate, account/delete) does its own verify.
   const getFreshPasskeyCredentialFn = async (): Promise<Record<string, unknown> | null> => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,13 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const credential = await navigator.credentials.get(normalizeOptions(optRes.data?.options));
       if (!credential) { toast('Verification cancelled', 'error'); return null; }
       const credJSON = credentialToJSON(credential);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const verRes = await api<any>('/api/auth/passkey/verify', {
-        method: 'POST',
-        body: JSON.stringify({ login_session_id: optRes.data?.login_session_id, credential: credJSON }),
-      });
-      if (!verRes.success) { toast('Verification failed', 'error'); return null; }
-      reauthExpiry = Date.now() + 5 * 60 * 1000;
       return { login_session_id: optRes.data?.login_session_id, credential: credJSON };
     } catch (e) {
       toast((e as Error).message || 'Verification failed', 'error');

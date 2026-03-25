@@ -72,7 +72,7 @@ export default function WhitelistPanel({ walletId }: { walletId: string }) {
   const handleRemove = async (contract: AllowedContract) => {
     const ok = await confirm({
       title: 'Remove from whitelist?',
-      message: `"${contract.label}" (${truncateAddress(contract.address)}) will be removed from the allowed list.`,
+      message: `"${contract.label}" (${truncateAddress(contract.contract_address)}) will be removed from the allowed list.`,
       confirmText: 'Remove',
       danger: true,
     });
@@ -231,8 +231,8 @@ export default function WhitelistPanel({ walletId }: { walletId: string }) {
                         </span>
                       )}
                     </div>
-                    <p className="font-mono text-xs text-on-surface-variant mt-0.5 truncate" title={contract.address}>
-                      {truncateAddress(contract.address)}
+                    <p className="font-mono text-xs text-on-surface-variant mt-0.5 truncate" title={contract.contract_address}>
+                      {truncateAddress(contract.contract_address)}
                     </p>
                   </div>
 

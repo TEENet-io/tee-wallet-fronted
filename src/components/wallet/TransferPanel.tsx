@@ -45,7 +45,7 @@ export default function TransferPanel({ walletId, chain }: { walletId: string; c
       .then(res => {
         if (!cancelled) {
           setContracts(res.contracts ?? []);
-          if (res.contracts?.length) setSelectedContract(res.contracts[0].address);
+          if (res.contracts?.length) setSelectedContract(res.contracts[0].contract_address);
         }
       })
       .finally(() => { if (!cancelled) setContractsLoading(false); });
@@ -159,8 +159,8 @@ export default function TransferPanel({ walletId, chain }: { walletId: string; c
                 className={INPUT_CLASS + ' cursor-pointer'}
               >
                 {contracts.map(c => (
-                  <option key={c.id} value={c.address}>
-                    {c.label} — {c.address.slice(0, 10)}…{c.address.slice(-6)}
+                  <option key={c.id} value={c.contract_address}>
+                    {c.label} — {c.contract_address.slice(0, 10)}…{c.contract_address.slice(-6)}
                   </option>
                 ))}
               </select>

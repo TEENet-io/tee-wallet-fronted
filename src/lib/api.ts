@@ -37,6 +37,13 @@ export async function api<T = Record<string, unknown>>(
 
   try {
     const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+    if (res.status === 401) {
+      clearSession();
+      // Force re-render: AuthContext reads from getSessionToken()
+      // which is now empty, so isAuthenticated becomes false → shows login
+      window.dispatchEvent(new Event('session-expired'));
+      return { success: false, error: 'Session expired' } as T & { success: boolean; error: string };
+    }
     return await res.json();
   } catch (e) {
     return { success: false, error: (e as Error).message } as T & {
