@@ -86,7 +86,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       const passkeyBody = await auth.getFreshPasskeyCredential();
       if (!passkeyBody) return;
 
-      const res = await api<{ key?: string; keys?: APIKey[] }>(
+      const res = await api<{ api_key?: string; keys?: APIKey[] }>(
         '/api/auth/apikey/generate',
         { method: 'POST', body: JSON.stringify(passkeyBody) },
       );
@@ -97,7 +97,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       }
 
       // The plaintext key is only returned once at generation time.
-      if (res.key) setNewKey(res.key);
+      if (res.api_key) setNewKey(res.api_key);
 
       // Refresh the list — either from the response or via a fresh fetch.
       if (Array.isArray(res.keys)) {
