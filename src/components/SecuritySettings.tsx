@@ -280,7 +280,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
               </div>
             ) : (
               keys.map((key, index) => {
-                const isActive = key.status === 'active';
+                const isActive = !key.status || key.status === 'active';
                 const isRevoking = revokingId === key.id;
                 const Icon = keyIcon(index);
 
