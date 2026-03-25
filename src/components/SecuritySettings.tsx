@@ -129,9 +129,9 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       const passkeyBody = await auth.getFreshPasskeyCredential();
       if (!passkeyBody) return;
 
-      const res = await api('/api/auth/apikey', {
+      const res = await api(`/api/auth/apikey?prefix=${encodeURIComponent(key.prefix)}`, {
         method: 'DELETE',
-        body: JSON.stringify({ ...passkeyBody, key_id: key.id }),
+        body: JSON.stringify(passkeyBody),
       });
 
       if (!res.success) {
