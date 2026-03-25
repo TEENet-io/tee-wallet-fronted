@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Shield, Key, AtSign, Fingerprint, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function Onboarding() {
-  const navigate = useNavigate();
+interface OnboardingProps {
+  onLoginSuccess: () => void;
+}
+
+export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
   const { login, register, loading } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -21,7 +23,7 @@ export default function Onboarding() {
 
   async function handleLogin() {
     const ok = await login();
-    if (ok) navigate('/wallets');
+    if (ok) onLoginSuccess();
   }
 
   return (

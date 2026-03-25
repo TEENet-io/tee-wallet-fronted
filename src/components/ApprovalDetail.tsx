@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Bot, Key, Info, CheckCircle2, AlertTriangle,
   Zap, Fingerprint, Clock, Loader2, ShieldAlert,
@@ -99,9 +98,12 @@ function DetailSkeleton() {
 // Main Component
 // ---------------------------------------------------------------------------
 
-export default function ApprovalDetail() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+interface ApprovalDetailProps {
+  approvalId: string;
+  onBack: () => void;
+}
+
+export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailProps) {
   const { getFreshPasskeyCredential } = useAuth();
   const { toast } = useToast();
 
@@ -119,12 +121,12 @@ export default function ApprovalDetail() {
   // Data fetch – try single endpoint first, fallback to list+filter
   // ---------------------------------------------------------------------------
   const fetchApproval = useCallback(async () => {
-    if (!id) return;
+    if (!approvalId) return;
     setLoading(true);
     setError(null);
 
     // Try single-item endpoint
-    const single = await api<{ approval: Approval }>(`/api/approvals/${id}`);
+    const single = await api<{ approval: Approval }>(`/api/approvals/${approvalId}`);
     if (single.success && single.approval) {
       setApproval(single.approval);
       setLoading(false);
@@ -134,7 +136,7 @@ export default function ApprovalDetail() {
     // Fallback: fetch list and filter
     const list = await api<{ approvals: Approval[] }>('/api/approvals');
     if (list.success && Array.isArray(list.approvals)) {
-      const found = list.approvals.find(a => a.id === id) ?? null;
+      const found = list.approvals.find(a => a.id === approvalId) ?? null;
       if (found) {
         setApproval(found);
       } else {
@@ -144,7 +146,7 @@ export default function ApprovalDetail() {
       setError(list.error || single.error || 'Failed to load approval');
     }
     setLoading(false);
-  }, [id]);
+  }, [approvalId]);
 
   useEffect(() => {
     fetchApproval();
@@ -172,7 +174,7 @@ export default function ApprovalDetail() {
   // Actions
   // ---------------------------------------------------------------------------
   const handleApprove = useCallback(async () => {
-    if (!id || !approval || approval.status !== 'pending') return;
+    if (!approvalId || !approval || approval.status !== 'pending') return;
     setApproving(true);
     try {
       const passkeyBody = await getFreshPasskeyCredential();
@@ -180,13 +182,13 @@ export default function ApprovalDetail() {
         setApproving(false);
         return;
       }
-      const res = await api(`/api/approvals/${id}/approve`, {
+      const res = await api(`/api/approvals/${approvalId}/approve`, {
         method: 'POST',
         body: JSON.stringify(passkeyBody),
       });
       if (res.success) {
         toast('Approval authorized successfully', 'success');
-        navigate('/approvals');
+        onBack();
       } else {
         toast(res.error || 'Authorization failed', 'error');
       }
@@ -195,16 +197,16 @@ export default function ApprovalDetail() {
     } finally {
       setApproving(false);
     }
-  }, [id, approval, getFreshPasskeyCredential, toast, navigate]);
+  }, [approvalId, approval, getFreshPasskeyCredential, toast, onBack]);
 
   const handleReject = useCallback(async () => {
-    if (!id || !approval || approval.status !== 'pending') return;
+    if (!approvalId || !approval || approval.status !== 'pending') return;
     setRejecting(true);
     try {
-      const res = await api(`/api/approvals/${id}/reject`, { method: 'POST' });
+      const res = await api(`/api/approvals/${approvalId}/reject`, { method: 'POST' });
       if (res.success) {
         toast('Transaction rejected', 'info');
-        navigate('/approvals');
+        onBack();
       } else {
         toast(res.error || 'Rejection failed', 'error');
       }
@@ -213,7 +215,7 @@ export default function ApprovalDetail() {
     } finally {
       setRejecting(false);
     }
-  }, [id, approval, toast, navigate]);
+  }, [approvalId, approval, toast, onBack]);
 
   // ---------------------------------------------------------------------------
   // Render states
@@ -224,7 +226,7 @@ export default function ApprovalDetail() {
     return (
       <div className="animate-in fade-in duration-500">
         <button
-          onClick={() => navigate('/approvals')}
+          onClick={onBack}
           className="mb-8 flex items-center gap-2 text-slate-400 cursor-pointer group w-fit hover:text-on-surface transition-colors"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -255,7 +257,7 @@ export default function ApprovalDetail() {
     <div className="animate-in fade-in duration-500">
       {/* Back Action */}
       <button
-        onClick={() => navigate('/approvals')}
+        onClick={onBack}
         className="mb-8 flex items-center gap-2 text-slate-400 cursor-pointer group w-fit hover:text-on-surface transition-colors"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -533,7 +535,7 @@ export default function ApprovalDetail() {
                 </p>
               </div>
               <button
-                onClick={() => navigate('/approvals')}
+                onClick={onBack}
                 className="mt-4 w-full py-3 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 text-sm font-medium"
               >
                 Back to Approvals

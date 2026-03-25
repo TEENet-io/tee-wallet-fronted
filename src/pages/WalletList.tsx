@@ -1,5 +1,4 @@
 import { useState, type MouseEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus, Wallet, ChevronRight, Trash2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,8 +31,11 @@ function StatusBadge({ status }: { status: 'ready' | 'creating' | 'error' }) {
   );
 }
 
-export default function WalletList() {
-  const navigate = useNavigate();
+interface WalletListProps {
+  onSelectWallet: (id: string) => void;
+}
+
+export default function WalletList({ onSelectWallet }: WalletListProps) {
   const { wallets, chainsMap, balances, loading, createWallet, deleteWallet, refreshBalance, getChainFamily, getChainCurrency } = useWallets();
   const { requireReauth } = useAuth();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -240,7 +242,7 @@ export default function WalletList() {
             return (
               <div
                 key={wallet.id}
-                onClick={() => navigate(`/wallets/${wallet.id}`)}
+                onClick={() => onSelectWallet(wallet.id)}
                 className="group relative bg-surface-container-low rounded-3xl p-6 ghost-border hover:bg-surface-container hover:shadow-[0_0_30px_rgba(124,58,237,0.08)] cursor-pointer transition-all duration-200 overflow-hidden"
               >
                 {/* Subtle hover glow */}

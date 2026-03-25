@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Terminal, Bot, KeyRound, Radio, Ban, ShieldCheck, MapPinOff,
   History, Laptop, Smartphone, LogOut, Trash2, Fingerprint, Copy, Check,
@@ -38,8 +37,11 @@ function maskKey(raw: string): string {
   return `oc_live_••••••••${suffix}`;
 }
 
-export default function SecuritySettings() {
-  const navigate = useNavigate();
+interface SecuritySettingsProps {
+  onNavigateHome: () => void;
+}
+
+export default function SecuritySettings({ onNavigateHome }: SecuritySettingsProps) {
   const auth = useAuth();
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -155,7 +157,7 @@ export default function SecuritySettings() {
     setDangerLoading(true);
     try {
       await auth.logout();
-      navigate('/');
+      onNavigateHome();
     } finally {
       setDangerLoading(false);
     }
@@ -173,7 +175,7 @@ export default function SecuritySettings() {
     setDangerLoading(true);
     try {
       const deleted = await auth.deleteAccount();
-      if (deleted) navigate('/');
+      if (deleted) onNavigateHome();
     } finally {
       setDangerLoading(false);
     }

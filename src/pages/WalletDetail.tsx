@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Copy, Check, RefreshCw, ArrowUpRight, FileCode2, ShieldCheck, SlidersHorizontal, Repeat2 } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import TransferPanel from '../components/wallet/TransferPanel';
@@ -45,16 +44,19 @@ function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
   );
 }
 
-export default function WalletDetail() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+interface WalletDetailProps {
+  walletId: string;
+  onBack: () => void;
+}
+
+export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const { wallets, balances, refreshBalance, getChainFamily, getChainCurrency, chainsMap, loading } = useWallets();
 
   const [activeTab, setActiveTab] = useState<TabId>('transfer');
   const [copied, setCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const wallet = wallets.find(w => w.id === id);
+  const wallet = wallets.find(w => w.id === walletId);
   const family = wallet ? getChainFamily(wallet.chain) : 'evm';
   const isSolana = family === 'solana';
   const currency = wallet ? getChainCurrency(wallet.chain) : '';
@@ -85,7 +87,7 @@ export default function WalletDetail() {
     return (
       <div className="animate-in fade-in duration-500 space-y-6">
         <button
-          onClick={() => navigate('/wallets')}
+          onClick={onBack}
           className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -107,7 +109,7 @@ export default function WalletDetail() {
     return (
       <div className="animate-in fade-in duration-500 space-y-6">
         <button
-          onClick={() => navigate('/wallets')}
+          onClick={onBack}
           className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -116,10 +118,10 @@ export default function WalletDetail() {
         <div className="bg-surface-container-low rounded-3xl p-12 ghost-border flex flex-col items-center justify-center gap-4 text-center">
           <p className="font-headline font-bold text-on-surface text-xl">Wallet not found</p>
           <p className="text-sm text-on-surface-variant">
-            The wallet with ID <span className="font-mono text-primary">{id}</span> could not be found.
+            The wallet with ID <span className="font-mono text-primary">{walletId}</span> could not be found.
           </p>
           <button
-            onClick={() => navigate('/wallets')}
+            onClick={onBack}
             className="mt-2 px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold hover:opacity-90 transition-all"
           >
             Back to Wallets
@@ -133,7 +135,7 @@ export default function WalletDetail() {
     <div className="animate-in fade-in duration-500 space-y-6">
       {/* Back button */}
       <button
-        onClick={() => navigate('/wallets')}
+        onClick={onBack}
         className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />

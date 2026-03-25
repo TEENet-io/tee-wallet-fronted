@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Clock, RefreshCw, ChevronRight, Inbox } from 'lucide-react';
 import { api } from '../lib/api';
 import type { Approval } from '../types';
@@ -175,8 +174,11 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
   );
 }
 
-export default function ApprovalList() {
-  const navigate = useNavigate();
+interface ApprovalListProps {
+  onSelectApproval: (id: string) => void;
+}
+
+export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -300,7 +302,7 @@ export default function ApprovalList() {
             <ApprovalCard
               key={approval.id}
               approval={approval}
-              onClick={() => navigate(`/approvals/${approval.id}`)}
+              onClick={() => onSelectApproval(approval.id)}
             />
           ))}
         </div>

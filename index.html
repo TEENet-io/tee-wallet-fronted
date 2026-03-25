@@ -5,16 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenClaw Wallet</title>
     <script>
-      // Derive base path from the current URL and set <base> tag so all
-      // relative asset paths (./assets/...) resolve correctly regardless
-      // of whether the URL has a trailing slash or not.
-      // e.g. "/instance/abc123" or "/instance/abc123/" -> "/instance/abc123/"
-      var p = window.location.pathname;
-      if (p.charAt(p.length - 1) !== '/') p += '/';
-      window.__API_BASE__ = p.replace(/\/+$/, '');
-      var base = document.createElement('base');
-      base.href = p;
-      document.head.appendChild(base);
+      window.__API_BASE__ = window.location.pathname.replace(/\/+$/, '');
     </script>
   </head>
   <body>
