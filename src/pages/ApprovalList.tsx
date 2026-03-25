@@ -190,7 +190,7 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
     else setLoading(true);
     setError(null);
 
-    const res = await api<{ approvals: Approval[] }>('/api/approvals');
+    const res = await api<{ approvals: Approval[] }>('/api/approvals/pending');
     if (res.success && Array.isArray(res.approvals)) {
       setApprovals(res.approvals);
     } else {

@@ -163,7 +163,7 @@ export default function AuditHistory() {
     setError(null);
 
     const qs = `page=${p}&limit=${PAGE_SIZE}${action ? `&action=${action}` : ''}`;
-    const res = await api<{ logs: AuditLog[]; total?: number }>(`/api/audit-logs?${qs}`);
+    const res = await api<{ logs: AuditLog[]; total?: number }>(`/api/audit/logs?${qs}`);
 
     if (res.success && Array.isArray(res.logs)) {
       setLogs(res.logs);

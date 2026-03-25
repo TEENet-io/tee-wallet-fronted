@@ -134,7 +134,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
     }
 
     // Fallback: fetch list and filter
-    const list = await api<{ approvals: Approval[] }>('/api/approvals');
+    const list = await api<{ approvals: Approval[] }>('/api/approvals/pending');
     if (list.success && Array.isArray(list.approvals)) {
       const found = list.approvals.find(a => a.id === approvalId) ?? null;
       if (found) {
