@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenClaw Wallet</title>
     <script>
-      // Capture the API base path before React Router changes the URL.
-      // Same logic as old index_old.html: derive from the initial page path.
-      // e.g. "/" -> "", "/instance/abc123/" -> "/instance/abc123"
-      window.__API_BASE__ = window.location.pathname.replace(/\/+$/, '');
+      // Derive base path from the current URL and set <base> tag so all
+      // relative asset paths (./assets/...) resolve correctly regardless
+      // of whether the URL has a trailing slash or not.
+      // e.g. "/instance/abc123" or "/instance/abc123/" -> "/instance/abc123/"
+      var p = window.location.pathname;
+      if (p.charAt(p.length - 1) !== '/') p += '/';
+      window.__API_BASE__ = p.replace(/\/+$/, '');
+      var base = document.createElement('base');
+      base.href = p;
+      document.head.appendChild(base);
     </script>
   </head>
   <body>
