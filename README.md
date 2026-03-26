@@ -1,20 +1,60 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# TWallet Frontend
 
-# Run and deploy your AI Studio app
+React frontend for TWallet — a secure multi-chain wallet powered by TEE hardware. Maintained by TEENet.
 
-This contains everything you need to run your app locally.
+## Tech Stack
 
-View your app in AI Studio: https://ai.studio/apps/f5b0a63f-1485-4912-9e7b-2adcb8d5306c
+- React 19 + TypeScript
+- Tailwind CSS v4
+- Vite
 
-## Run Locally
+## Development
 
-**Prerequisites:**  Node.js
+```bash
+npm install
+npm run dev
+```
 
+## Build
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm run build    # outputs to dist/
+npm run lint     # TypeScript type check
+```
+
+## Deployment
+
+This frontend is designed to be served by the [teenet-wallet](https://github.com/TEENet-io/teenet-wallet) Go backend. The backend serves `dist/` as static files and proxies API requests.
+
+### As Git Submodule
+
+The backend includes this repo as a submodule at `frontend-src/`. To build the Docker image with frontend included:
+
+```bash
+cd teenet-wallet
+./export.sh
+```
+
+### Standalone
+
+```bash
+npm run build
+# Copy dist/ to the backend's frontend/ directory
+```
+
+## Features
+
+- Passkey (WebAuthn) authentication
+- Multi-chain wallet management (EVM + Solana)
+- Contract whitelist with preset programs
+- USD approval threshold policies
+- Approval queue for agent transactions
+- API key management with labels
+- Custom chain management
+- Audit history timeline
+- Dark / Light theme
+- English / Chinese i18n
+
+## License
+
+MIT
