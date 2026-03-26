@@ -249,7 +249,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       {/* Tab content */}
       <div className="animate-in fade-in duration-200" key={activeTab}>
         {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} />}
-        {activeTab === 'program' && <ProgramPanel walletId={wallet.id} />}
+        {activeTab === 'program' && <ProgramPanel walletId={wallet.id} chainFamily={family} />}
       </div>
     </div>
   );

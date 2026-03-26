@@ -6,13 +6,21 @@ import { useConfirm } from '../ConfirmDialog';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { AllowedContract } from '../../types';
 
-// Default well-known contracts that are commonly used
-const DEFAULT_PROGRAMS = [
+// Default well-known contracts by chain family
+const EVM_PROGRAMS = [
   { label: 'Uniswap V3 Router', address: '0xE592427A0AEce92De3Edee1F18E0157C05861564', abi_hint: 'DEX' },
   { label: 'USDT (Tether)', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', abi_hint: 'Stablecoin' },
   { label: 'USDC (Circle)', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', abi_hint: 'Stablecoin' },
   { label: 'Aave V3 Pool', address: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', abi_hint: 'Lending' },
   { label: 'Lido stETH', address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', abi_hint: 'Staking' },
+];
+
+const SOLANA_PROGRAMS = [
+  { label: 'USDC (Solana)', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', abi_hint: 'Stablecoin' },
+  { label: 'USDT (Solana)', address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', abi_hint: 'Stablecoin' },
+  { label: 'Jupiter Aggregator', address: 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', abi_hint: 'DEX' },
+  { label: 'Raydium AMM', address: '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', abi_hint: 'DEX' },
+  { label: 'Marinade Finance', address: 'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD', abi_hint: 'Staking' },
 ];
 
 function truncateAddr(addr: string): string {
@@ -32,9 +40,10 @@ function badgeColor(hint?: string): string {
 
 interface ProgramPanelProps {
   walletId: string;
+  chainFamily: 'evm' | 'solana';
 }
 
-export default function ProgramPanel({ walletId }: ProgramPanelProps) {
+export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProps) {
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useLanguage();
@@ -99,7 +108,9 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
     }
   }
 
-  async function handleAddDefault(program: typeof DEFAULT_PROGRAMS[number]) {
+  const DEFAULT_PROGRAMS = chainFamily === 'solana' ? SOLANA_PROGRAMS : EVM_PROGRAMS;
+
+  async function handleAddDefault(program: typeof EVM_PROGRAMS[number]) {
     setAdding(true);
     try {
       const res = await api(`/api/wallets/${walletId}/contracts`, {
