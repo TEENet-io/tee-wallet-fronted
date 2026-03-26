@@ -358,6 +358,8 @@ const en: Record<string, string> = {
   'history.action.policyUpdate': 'Policy Update',
   'history.action.approve': 'Approve',
   'history.action.reject': 'Reject',
+  'history.action.contractAdd': 'Contract Add',
+  'history.action.contractUpdate': 'Contract Update',
   'history.action.contractCall': 'Contract Call',
   'history.action.tokenApprove': 'Token Approve',
   'history.action.revokeApproval': 'Revoke Approval',

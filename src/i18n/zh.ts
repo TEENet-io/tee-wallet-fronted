@@ -358,6 +358,8 @@ const zh: Record<string, string> = {
   'history.action.policyUpdate': '更新策略',
   'history.action.approve': '批准',
   'history.action.reject': '拒绝',
+  'history.action.contractAdd': '添加合约',
+  'history.action.contractUpdate': '更新合约',
   'history.action.contractCall': '合约调用',
   'history.action.tokenApprove': '代币授权',
   'history.action.revokeApproval': '撤销授权',

@@ -23,6 +23,8 @@ const ACTION_OPTIONS: ActionOption[] = [
   { value: 'policy_update', labelKey: 'history.action.policyUpdate' },
   { value: 'approval_approve', labelKey: 'history.action.approve' },
   { value: 'approval_reject', labelKey: 'history.action.reject' },
+  { value: 'contract_add', labelKey: 'history.action.contractAdd' },
+  { value: 'contract_update', labelKey: 'history.action.contractUpdate' },
   { value: 'contract_call', labelKey: 'history.action.contractCall' },
   { value: 'approve_token', labelKey: 'history.action.tokenApprove' },
   { value: 'revoke_approval', labelKey: 'history.action.revokeApproval' },
@@ -51,6 +53,8 @@ function badgeStyle(action: string): BadgeStyle {
   if (action === 'policy_update') return { bg: 'bg-yellow-500/10', border: 'border-yellow-500/25', text: 'text-yellow-400' };
   if (action === 'approval_approve') return { bg: 'bg-green-500/10', border: 'border-green-500/25', text: 'text-green-400' };
   if (action === 'approval_reject') return { bg: 'bg-red-500/10', border: 'border-red-500/25', text: 'text-red-400' };
+  if (action === 'contract_add') return { bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400' };
+  if (action === 'contract_update') return { bg: 'bg-sky-500/10', border: 'border-sky-500/25', text: 'text-sky-400' };
   if (action === 'contract_call') return { bg: 'bg-orange-500/10', border: 'border-orange-500/25', text: 'text-orange-400' };
   if (action === 'approve_token') return { bg: 'bg-cyan-500/10', border: 'border-cyan-500/25', text: 'text-cyan-400' };
   if (action === 'revoke_approval') return { bg: 'bg-rose-500/10', border: 'border-rose-500/25', text: 'text-rose-400' };
@@ -109,42 +113,31 @@ function DetailBlock({ details }: { details: string }) {
 
 function LogRow({ log, getLabel }: LogRowProps) {
   return (
-    <div className="flex items-start gap-4 px-5 py-4 group hover:bg-surface-container-high/50 transition-colors duration-150 rounded-xl">
-      {/* Badge */}
-      <div className="pt-0.5 shrink-0">
+    <div className="px-4 py-3 hover:bg-surface-container-high/50 transition-colors rounded-lg">
+      {/* Top row: badge + time + status */}
+      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
         <ActionBadge action={log.action} getLabel={getLabel} />
-      </div>
-
-      {/* Detail */}
-      <div className="flex-1 min-w-0">
-        {log.details ? (
-          <DetailBlock details={log.details} />
-        ) : (
-          <p className="text-sm text-on-surface-variant italic capitalize">{log.action.replace(/_/g, ' ')}</p>
-        )}
         {log.auth_mode && (
-          <span className="text-[10px] text-outline font-mono mt-1 inline-block">{log.auth_mode}</span>
+          <span className="text-[10px] text-outline font-mono px-1.5 py-0.5 bg-surface-container-high rounded">{log.auth_mode}</span>
         )}
-      </div>
-
-      {/* Right meta */}
-      <div className="shrink-0 text-right space-y-0.5">
-        <p className="text-xs text-on-surface-variant tabular-nums">
-          {new Date(log.created_at).toLocaleString(undefined, {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })}
-        </p>
         {log.status && (
           <span className={`text-[10px] font-bold uppercase ${log.status === 'success' ? 'text-green-400' : 'text-error'}`}>{log.status}</span>
         )}
-        {log.ip && (
-          <p className="text-[11px] text-slate-500 font-mono">{log.ip}</p>
-        )}
+        <span className="ml-auto text-[11px] text-on-surface-variant tabular-nums">
+          {new Date(log.created_at).toLocaleString(undefined, {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+          })}
+        </span>
       </div>
+      {/* Detail row */}
+      {log.details && (
+        <div className="ml-0.5">
+          <DetailBlock details={log.details} />
+        </div>
+      )}
+      {log.ip && (
+        <p className="text-[10px] text-outline font-mono mt-1">{log.ip}</p>
+      )}
     </div>
   );
 }
