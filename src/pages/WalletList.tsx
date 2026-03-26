@@ -3,6 +3,7 @@ import { Plus, Wallet, ChevronRight, Trash2, RefreshCw, ChevronDown, ChevronUp }
 import { useWallets } from '../contexts/WalletContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/ConfirmDialog';
+import { useLanguage } from '../contexts/LanguageContext';
 import ChainSelector from '../components/ChainSelector';
 
 function truncateAddress(address: string): string {
@@ -11,12 +12,17 @@ function truncateAddress(address: string): string {
 }
 
 function StatusBadge({ status }: { status: 'ready' | 'creating' | 'error' }) {
+  const { t } = useLanguage();
   const styles = {
     ready: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     creating: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
     error: 'bg-error/10 text-error border-error/20',
   };
-  const labels = { ready: 'Ready', creating: 'Creating...', error: 'Error' };
+  const labels = {
+    ready: t('wallet.status.ready'),
+    creating: t('wallet.status.creating'),
+    error: t('wallet.status.error'),
+  };
   const dots = {
     ready: 'bg-emerald-400',
     creating: 'bg-yellow-400 animate-pulse',
@@ -39,6 +45,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
   const { wallets, chainsMap, balances, loading, createWallet, deleteWallet, refreshBalance, getChainFamily, getChainCurrency } = useWallets();
   const { requireReauth } = useAuth();
   const { confirm, ConfirmDialog } = useConfirm();
+  const { t } = useLanguage();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedChain, setSelectedChain] = useState('');
@@ -70,9 +77,9 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
     const authed = await requireReauth();
     if (!authed) return;
     const ok = await confirm({
-      title: 'Delete wallet?',
-      message: `This will permanently remove "${walletLabel}". This action cannot be undone.`,
-      confirmText: 'Delete Wallet',
+      title: t('wallets.delete'),
+      message: `${t('wallets.deleteConfirmPrefix')} "${walletLabel}". ${t('wallets.deleteConfirmSuffix')}`,
+      confirmText: t('wallets.deleteBtn'),
       danger: true,
     });
     if (!ok) return;
@@ -104,14 +111,14 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
             <span className="text-secondary text-xs font-bold tracking-[0.2em] uppercase font-label">
-              TEE-Protected
+              {t('wallets.teeProtected')}
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-on-surface">
-            Your Wallets
+            {t('wallets.title')}
           </h1>
           <p className="text-slate-400 max-w-2xl text-lg">
-            Manage your hardware-isolated wallets. Each wallet operates inside a Trusted Execution Environment — your keys never leave the enclave.
+            {t('wallets.subtitle')}
           </p>
         </div>
       </section>
@@ -126,7 +133,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
             <div className="w-9 h-9 rounded-xl primary-gradient flex items-center justify-center shadow-[0_0_15px_rgba(124,58,237,0.3)]">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <span className="font-headline font-bold text-on-surface">Create New Wallet</span>
+            <span className="font-headline font-bold text-on-surface">{t('wallets.createNew')}</span>
           </div>
           {createOpen
             ? <ChevronUp className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
@@ -141,7 +148,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
-                Chain
+                {t('wallets.chain')}
               </label>
               <ChainSelector
                 chains={chainsMap}
@@ -152,14 +159,14 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
-                Label <span className="normal-case text-outline font-normal">(optional)</span>
+                {t('wallets.label')}
               </label>
               <input
                 type="text"
                 value={label}
                 onChange={e => setLabel(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                placeholder={effectiveChain ? `${chainsMap[effectiveChain]?.label ?? effectiveChain} wallet` : 'My wallet'}
+                placeholder={effectiveChain ? `${chainsMap[effectiveChain]?.label ?? effectiveChain} wallet` : t('wallets.labelPlaceholder')}
                 className="w-full px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-on-surface text-sm placeholder:text-outline outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(124,58,237,0.15)] transition-all"
               />
             </div>
@@ -169,7 +176,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                 onClick={() => setCreateOpen(false)}
                 className="flex-1 py-3 rounded-xl bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-variant transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreate}
@@ -179,12 +186,12 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                 {creating ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    Creating...
+                    {t('wallets.creating')}
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    Create Wallet
+                    {t('wallets.create')}
                   </>
                 )}
               </button>
@@ -217,9 +224,9 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
               <Wallet className="w-8 h-8 text-outline" />
             </div>
             <div>
-              <p className="font-headline font-bold text-on-surface text-xl mb-2">No wallets yet</p>
+              <p className="font-headline font-bold text-on-surface text-xl mb-2">{t('wallets.empty')}</p>
               <p className="text-sm text-on-surface-variant max-w-xs">
-                Create your first TEE-protected wallet above to get started. Your keys are generated inside a secure enclave and never exposed.
+                {t('wallets.emptyDescFull')}
               </p>
             </div>
             <button
@@ -227,7 +234,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
               className="mt-2 px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:opacity-90 transition-all flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Create First Wallet
+              {t('wallets.createFirst')}
             </button>
           </div>
         ) : (
@@ -289,7 +296,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                       <button
                         onClick={e => handleRefresh(e, wallet.id)}
                         disabled={isRefreshing}
-                        title="Refresh balance"
+                        title={t('wallets.refreshBalance')}
                         className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -299,7 +306,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                     <button
                       onClick={e => handleDelete(e, wallet.id, wallet.label)}
                       disabled={isDeleting}
-                      title="Delete wallet"
+                      title={t('wallets.deleteWallet')}
                       className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                     >
                       {isDeleting
@@ -315,7 +322,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                 {/* Mobile balance row */}
                 {wallet.status === 'ready' && balance !== undefined && (
                   <div className="sm:hidden mt-3 pt-3 border-t border-outline-variant/10 flex items-center justify-between">
-                    <span className="text-xs text-outline">Balance</span>
+                    <span className="text-xs text-outline">{t('wallet.balance')}</span>
                     <span className="text-sm font-bold text-on-surface font-mono">
                       {balance} <span className="text-outline text-[10px]">{currency}</span>
                     </span>

@@ -1,34 +1,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { History, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../lib/api';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { AuditLog } from '../types';
 
 // ---------------------------------------------------------------------------
-// Action filter config
+// Action filter config (values only — labels resolved via t() in component)
 // ---------------------------------------------------------------------------
 
 interface ActionOption {
   value: string;
-  label: string;
+  labelKey: string;
 }
 
 const ACTION_OPTIONS: ActionOption[] = [
-  { value: '', label: 'All Actions' },
-  { value: 'login', label: 'Login' },
-  { value: 'wallet_create', label: 'Wallet Create' },
-  { value: 'wallet_delete', label: 'Wallet Delete' },
-  { value: 'transfer', label: 'Transfer' },
-  { value: 'sign', label: 'Sign' },
-  { value: 'policy_update', label: 'Policy Update' },
-  { value: 'approval_approve', label: 'Approve' },
-  { value: 'approval_reject', label: 'Reject' },
-  { value: 'contract_call', label: 'Contract Call' },
-  { value: 'approve_token', label: 'Token Approve' },
-  { value: 'revoke_approval', label: 'Revoke Approval' },
-  { value: 'apikey_generate', label: 'API Key Generate' },
-  { value: 'apikey_revoke', label: 'API Key Revoke' },
-  { value: 'wrap_sol', label: 'Wrap SOL' },
-  { value: 'unwrap_sol', label: 'Unwrap wSOL' },
+  { value: '', labelKey: 'history.action.all' },
+  { value: 'login', labelKey: 'history.action.login' },
+  { value: 'wallet_create', labelKey: 'history.action.walletCreate' },
+  { value: 'wallet_delete', labelKey: 'history.action.walletDelete' },
+  { value: 'transfer', labelKey: 'history.action.transfer' },
+  { value: 'sign', labelKey: 'history.action.sign' },
+  { value: 'policy_update', labelKey: 'history.action.policyUpdate' },
+  { value: 'approval_approve', labelKey: 'history.action.approve' },
+  { value: 'approval_reject', labelKey: 'history.action.reject' },
+  { value: 'contract_call', labelKey: 'history.action.contractCall' },
+  { value: 'approve_token', labelKey: 'history.action.tokenApprove' },
+  { value: 'revoke_approval', labelKey: 'history.action.revokeApproval' },
+  { value: 'apikey_generate', labelKey: 'history.action.apikeyGenerate' },
+  { value: 'apikey_revoke', labelKey: 'history.action.apikeyRevoke' },
+  { value: 'wrap_sol', labelKey: 'history.action.wrapSol' },
+  { value: 'unwrap_sol', labelKey: 'history.action.unwrapSol' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -60,25 +61,22 @@ function badgeStyle(action: string): BadgeStyle {
   return { bg: 'bg-slate-500/10', border: 'border-slate-500/25', text: 'text-slate-400' };
 }
 
-function actionLabel(action: string): string {
-  return ACTION_OPTIONS.find(o => o.value === action)?.label ?? action.replace(/_/g, ' ');
-}
-
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
 interface ActionBadgeProps {
   action: string;
+  getLabel: (action: string) => string;
 }
 
-function ActionBadge({ action }: ActionBadgeProps) {
+function ActionBadge({ action, getLabel }: ActionBadgeProps) {
   const s = badgeStyle(action);
   return (
     <span
       className={`inline-flex items-center px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-[0.12em] whitespace-nowrap ${s.bg} ${s.border} ${s.text}`}
     >
-      {actionLabel(action)}
+      {getLabel(action)}
     </span>
   );
 }
@@ -86,6 +84,7 @@ function ActionBadge({ action }: ActionBadgeProps) {
 interface LogRowProps {
   key?: string | number;
   log: AuditLog;
+  getLabel: (action: string) => string;
 }
 
 function DetailBlock({ details }: { details: string }) {
@@ -108,12 +107,12 @@ function DetailBlock({ details }: { details: string }) {
   }
 }
 
-function LogRow({ log }: LogRowProps) {
+function LogRow({ log, getLabel }: LogRowProps) {
   return (
     <div className="flex items-start gap-4 px-5 py-4 group hover:bg-surface-container-high/50 transition-colors duration-150 rounded-xl">
       {/* Badge */}
       <div className="pt-0.5 shrink-0">
-        <ActionBadge action={log.action} />
+        <ActionBadge action={log.action} getLabel={getLabel} />
       </div>
 
       {/* Detail */}
@@ -173,6 +172,7 @@ function LogRowSkeleton() {
 const PAGE_SIZE = 20;
 
 export default function AuditHistory() {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -182,6 +182,13 @@ export default function AuditHistory() {
   const [error, setError] = useState<string | null>(null);
 
   const totalPages = total !== null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : null;
+
+  // Resolve label for an action value using t()
+  function getActionLabel(action: string): string {
+    const opt = ACTION_OPTIONS.find(o => o.value === action);
+    if (opt) return t(opt.labelKey);
+    return action.replace(/_/g, ' ');
+  }
 
   const fetchLogs = useCallback(async (p: number, action: string, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -195,12 +202,12 @@ export default function AuditHistory() {
       setLogs(res.logs);
       setTotal(res.total ?? null);
     } else {
-      setError(res.error || 'Failed to load audit logs');
+      setError(res.error || t('history.loadError'));
     }
 
     if (isRefresh) setRefreshing(false);
     else setLoading(false);
-  }, []);
+  }, [t]);
 
   // Fetch whenever page or filter changes
   useEffect(() => {
@@ -225,10 +232,10 @@ export default function AuditHistory() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <History className="w-6 h-6 text-primary" />
-            <h1 className="text-3xl font-headline font-bold text-on-surface tracking-tight">Audit History</h1>
+            <h1 className="text-3xl font-headline font-bold text-on-surface tracking-tight">{t('history.title')}</h1>
           </div>
           <p className="text-on-surface-variant text-sm">
-            A tamper-evident log of all actions performed in this account.
+            {t('history.subtitle')}
           </p>
         </div>
 
@@ -238,7 +245,7 @@ export default function AuditHistory() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-high ghost-border text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('history.refresh')}
         </button>
       </div>
 
@@ -246,7 +253,7 @@ export default function AuditHistory() {
       <div className="mb-5 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-on-surface-variant">
           <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium">Filter:</span>
+          <span className="text-sm font-medium">{t('history.filter')}:</span>
         </div>
         <div className="relative">
           <select
@@ -256,7 +263,7 @@ export default function AuditHistory() {
           >
             {ACTION_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value} className="bg-surface-container">
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </select>
@@ -265,7 +272,7 @@ export default function AuditHistory() {
         </div>
 
         {total !== null && (
-          <span className="text-xs text-slate-500 ml-1">{total.toLocaleString()} total entries</span>
+          <span className="text-xs text-slate-500 ml-1">{total.toLocaleString()} {t('history.totalEntries')}</span>
         )}
       </div>
 
@@ -282,13 +289,13 @@ export default function AuditHistory() {
             <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center mb-4">
               <History className="w-7 h-7 text-error" />
             </div>
-            <p className="text-on-surface font-semibold mb-1">Failed to load logs</p>
+            <p className="text-on-surface font-semibold mb-1">{t('history.loadFailed')}</p>
             <p className="text-on-surface-variant text-sm mb-5">{error}</p>
             <button
               onClick={() => fetchLogs(page, actionFilter)}
               className="px-5 py-2 rounded-xl bg-surface-container-high ghost-border text-sm font-medium text-on-surface hover:border-outline/40 transition-all"
             >
-              Try Again
+              {t('approval.tryAgain')}
             </button>
           </div>
         ) : logs.length === 0 ? (
@@ -296,17 +303,17 @@ export default function AuditHistory() {
             <div className="w-16 h-16 rounded-2xl bg-surface-container-high ghost-border flex items-center justify-center mb-4">
               <History className="w-8 h-8 text-slate-500" />
             </div>
-            <p className="text-on-surface font-semibold mb-1">No log entries</p>
+            <p className="text-on-surface font-semibold mb-1">{t('history.empty')}</p>
             <p className="text-on-surface-variant text-sm">
               {actionFilter
-                ? `No "${actionLabel(actionFilter)}" events found.`
-                : 'No audit events have been recorded yet.'}
+                ? `${t('history.noEvents')} "${getActionLabel(actionFilter)}".`
+                : t('history.noEventsAll')}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-outline-variant/10 p-2">
             {logs.map(log => (
-              <LogRow key={log.id} log={log} />
+              <LogRow key={log.id} log={log} getLabel={getActionLabel} />
             ))}
           </div>
         )}
@@ -317,8 +324,8 @@ export default function AuditHistory() {
         <div className="mt-5 flex items-center justify-between">
           <p className="text-sm text-slate-500">
             {totalPages !== null
-              ? `Page ${page} of ${totalPages}`
-              : `Page ${page}`}
+              ? `${t('history.page')} ${page} ${t('history.of')} ${totalPages}`
+              : `${t('history.page')} ${page}`}
           </p>
 
           <div className="flex items-center gap-2">
@@ -328,14 +335,14 @@ export default function AuditHistory() {
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container-low ghost-border text-sm font-medium text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
-              Prev
+              {t('history.prev')}
             </button>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={!canNext || loading}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container-low ghost-border text-sm font-medium text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Next
+              {t('history.next')}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

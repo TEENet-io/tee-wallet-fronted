@@ -1,17 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Clock, RefreshCw, ChevronRight, Inbox } from 'lucide-react';
 import { api } from '../lib/api';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { Approval } from '../types';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'expired';
-
-const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'expired', label: 'Expired' },
-];
 
 function getTimeRemaining(expiresAt?: string): string | null {
   if (!expiresAt) return null;
@@ -44,11 +37,12 @@ interface StatusBadgeProps {
 }
 
 function StatusBadge({ status }: StatusBadgeProps) {
+  const { t } = useLanguage();
   if (status === 'pending') {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 border border-secondary/25 text-secondary text-[10px] font-black uppercase tracking-[0.15em]">
         <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse shadow-[0_0_6px_#5de6ff]" />
-        Pending
+        {t('approvals.pending')}
       </span>
     );
   }
@@ -56,7 +50,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 text-[10px] font-black uppercase tracking-[0.15em]">
         <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-        Approved
+        {t('approvals.approved')}
       </span>
     );
   }
@@ -64,14 +58,14 @@ function StatusBadge({ status }: StatusBadgeProps) {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-black uppercase tracking-[0.15em]">
         <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-        Rejected
+        {t('approvals.rejected')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-500/10 border border-slate-500/25 text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">
       <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-      Expired
+      {t('approvals.expired')}
     </span>
   );
 }
@@ -179,11 +173,20 @@ interface ApprovalListProps {
 }
 
 export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
+  const { t } = useLanguage();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<StatusFilter>('all');
+
+  const STATUS_FILTERS: { value: StatusFilter; labelKey: string }[] = [
+    { value: 'all', labelKey: 'approvals.all' },
+    { value: 'pending', labelKey: 'approvals.pending' },
+    { value: 'approved', labelKey: 'approvals.approved' },
+    { value: 'rejected', labelKey: 'approvals.rejected' },
+    { value: 'expired', labelKey: 'approvals.expired' },
+  ];
 
   const fetchApprovals = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -194,12 +197,12 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
     if (res.success && Array.isArray(res.approvals)) {
       setApprovals(res.approvals);
     } else {
-      setError(res.error || 'Failed to load approvals');
+      setError(res.error || t('approvals.loadError'));
     }
 
     if (isRefresh) setRefreshing(false);
     else setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchApprovals();
@@ -218,14 +221,14 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <ShieldCheck className="w-6 h-6 text-primary" />
-            <h1 className="text-3xl font-headline font-bold text-on-surface tracking-tight">Approvals</h1>
+            <h1 className="text-3xl font-headline font-bold text-on-surface tracking-tight">{t('approvals.title')}</h1>
             {pendingCount > 0 && (
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-secondary/20 border border-secondary/40 text-secondary text-xs font-black shadow-[0_0_8px_rgba(93,230,255,0.2)]">
                 {pendingCount}
               </span>
             )}
           </div>
-          <p className="text-on-surface-variant text-sm">Review and authorize agent transaction requests.</p>
+          <p className="text-on-surface-variant text-sm">{t('approvals.subtitle')}</p>
         </div>
 
         <button
@@ -234,13 +237,13 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-high ghost-border text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('approvals.refresh')}
         </button>
       </div>
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-container-low ghost-border mb-6 w-fit">
-        {STATUS_FILTERS.map(({ value, label }) => (
+        {STATUS_FILTERS.map(({ value, labelKey }) => (
           <button
             key={value}
             onClick={() => setFilter(value)}
@@ -250,7 +253,7 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -273,13 +276,13 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
           <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center mb-4">
             <ShieldCheck className="w-7 h-7 text-error" />
           </div>
-          <p className="text-on-surface font-semibold mb-1">Failed to load approvals</p>
+          <p className="text-on-surface font-semibold mb-1">{t('approvals.loadFailed')}</p>
           <p className="text-on-surface-variant text-sm mb-5">{error}</p>
           <button
             onClick={() => fetchApprovals()}
             className="px-5 py-2 rounded-xl bg-surface-container-high ghost-border text-sm font-medium text-on-surface hover:border-outline/40 transition-all"
           >
-            Try Again
+            {t('approval.tryAgain')}
           </button>
         </div>
       ) : filtered.length === 0 ? (
@@ -288,12 +291,12 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
             <Inbox className="w-8 h-8 text-slate-500" />
           </div>
           <p className="text-on-surface font-semibold mb-1">
-            {filter === 'all' ? 'No approvals yet' : `No ${filter} approvals`}
+            {filter === 'all' ? t('approvals.empty') : `${t('approvals.noStatus')} ${t(`approvals.${filter}`)}`}
           </p>
           <p className="text-on-surface-variant text-sm">
             {filter === 'all'
-              ? 'Agent transaction requests requiring your sign-off will appear here.'
-              : `There are no approvals with status "${filter}" at the moment.`}
+              ? t('approvals.emptyDesc')
+              : t('approvals.noStatusDesc')}
           </p>
         </div>
       ) : (

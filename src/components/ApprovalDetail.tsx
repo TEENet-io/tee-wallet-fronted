@@ -6,6 +6,7 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { Approval } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -58,17 +59,17 @@ function riskBorderFull(level?: string): string {
   return 'border-tertiary';
 }
 
-function riskTitle(level?: string): string {
-  if (level === 'low') return 'Low Risk';
-  if (level === 'high') return 'High Risk';
-  return 'Moderate Risk';
+function riskTitleKey(level?: string): string {
+  if (level === 'low') return 'approval.lowRisk';
+  if (level === 'high') return 'approval.highRisk';
+  return 'approval.midRisk';
 }
 
 function statusColors(status: Approval['status']) {
-  if (status === 'approved') return { dot: 'bg-green-400 shadow-[0_0_8px_#4ade80]', text: 'text-green-400', label: 'Authorized' };
-  if (status === 'rejected') return { dot: 'bg-red-400 shadow-[0_0_8px_#f87171]', text: 'text-red-400', label: 'Rejected' };
-  if (status === 'expired') return { dot: 'bg-slate-400', text: 'text-slate-400', label: 'Expired' };
-  return { dot: 'bg-secondary shadow-[0_0_8px_#5de6ff] animate-pulse', text: 'text-secondary', label: 'Pending Authorization' };
+  if (status === 'approved') return { dot: 'bg-green-400 shadow-[0_0_8px_#4ade80]', text: 'text-green-400', labelKey: 'approval.authorized' };
+  if (status === 'rejected') return { dot: 'bg-red-400 shadow-[0_0_8px_#f87171]', text: 'text-red-400', labelKey: 'approval.txRejected' };
+  if (status === 'expired') return { dot: 'bg-slate-400', text: 'text-slate-400', labelKey: 'approvals.expired' };
+  return { dot: 'bg-secondary shadow-[0_0_8px_#5de6ff] animate-pulse', text: 'text-secondary', labelKey: 'approval.pendingAuth' };
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +107,7 @@ interface ApprovalDetailProps {
 export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailProps) {
   const { getFreshPasskeyCredential } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [approval, setApproval] = useState<Approval | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,13 +142,13 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
       if (found) {
         setApproval(found);
       } else {
-        setError('Approval not found');
+        setError(t('approval.loadError'));
       }
     } else {
-      setError(list.error || single.error || 'Failed to load approval');
+      setError(list.error || single.error || t('approval.loadErrorGeneric'));
     }
     setLoading(false);
-  }, [approvalId]);
+  }, [approvalId, t]);
 
   useEffect(() => {
     fetchApproval();
@@ -187,17 +189,17 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
         body: JSON.stringify(passkeyBody),
       });
       if (res.success) {
-        toast('Approval authorized successfully', 'success');
+        toast(t('approval.authorizeSuccess'), 'success');
         onBack();
       } else {
-        toast(res.error || 'Authorization failed', 'error');
+        toast(res.error || t('approval.authorizeFail'), 'error');
       }
     } catch (e) {
-      toast((e as Error).message || 'Authorization failed', 'error');
+      toast((e as Error).message || t('approval.authorizeFail'), 'error');
     } finally {
       setApproving(false);
     }
-  }, [approvalId, approval, getFreshPasskeyCredential, toast, onBack]);
+  }, [approvalId, approval, getFreshPasskeyCredential, toast, onBack, t]);
 
   const handleReject = useCallback(async () => {
     if (!approvalId || !approval || approval.status !== 'pending') return;
@@ -205,17 +207,17 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
     try {
       const res = await api(`/api/approvals/${approvalId}/reject`, { method: 'POST' });
       if (res.success) {
-        toast('Transaction rejected', 'info');
+        toast(t('approval.rejectSuccess'), 'info');
         onBack();
       } else {
-        toast(res.error || 'Rejection failed', 'error');
+        toast(res.error || t('approval.rejectFail'), 'error');
       }
     } catch (e) {
-      toast((e as Error).message || 'Rejection failed', 'error');
+      toast((e as Error).message || t('approval.rejectFail'), 'error');
     } finally {
       setRejecting(false);
     }
-  }, [approvalId, approval, toast, onBack]);
+  }, [approvalId, approval, toast, onBack, t]);
 
   // ---------------------------------------------------------------------------
   // Render states
@@ -230,19 +232,19 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
           className="mb-8 flex items-center gap-2 text-slate-400 cursor-pointer group w-fit hover:text-on-surface transition-colors"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-label text-sm font-medium">Return to Queue</span>
+          <span className="font-label text-sm font-medium">{t('approval.back')}</span>
         </button>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-16 h-16 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center mb-4">
             <ShieldAlert className="w-8 h-8 text-error" />
           </div>
-          <p className="text-on-surface font-semibold mb-1">Could not load approval</p>
-          <p className="text-on-surface-variant text-sm mb-5">{error ?? 'Unknown error'}</p>
+          <p className="text-on-surface font-semibold mb-1">{t('approval.loadError')}</p>
+          <p className="text-on-surface-variant text-sm mb-5">{error ?? t('approval.unknownError')}</p>
           <button
             onClick={fetchApproval}
             className="px-5 py-2 rounded-xl bg-surface-container-high ghost-border text-sm font-medium text-on-surface hover:border-outline/40 transition-all"
           >
-            Try Again
+            {t('approval.tryAgain')}
           </button>
         </div>
       </div>
@@ -261,7 +263,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
         className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        Return to Queue
+        {t('approval.back')}
       </button>
 
       {/* Status Header */}
@@ -271,7 +273,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
-              <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.15em]`}>{sc.label}</span>
+              <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.15em]`}>{t(sc.labelKey)}</span>
             </div>
             <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
               {approval.amount
@@ -287,7 +289,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-high rounded-xl border border-secondary/20 flex-shrink-0">
               <Clock className="w-4 h-4 text-secondary" />
               <div>
-                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">Expires</p>
+                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">{t('approval.expires')}</p>
                 <p className="text-lg font-headline font-black text-secondary tabular-nums">{timeRemaining?.display ?? '--:--'}</p>
               </div>
               <div className="w-16 bg-surface-container-low h-1 rounded-full overflow-hidden">
@@ -313,7 +315,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             <div className="flex items-start gap-3 p-4">
               <Bot className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Agent</p>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.agent')}</p>
                 <p className="text-sm text-on-surface">{approval.agent_name}</p>
                 {approval.agent_intent && <p className="text-xs text-on-surface-variant mt-1">{approval.agent_intent}</p>}
               </div>
@@ -324,7 +326,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             <div className="flex items-start gap-3 p-4">
               <Key className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Destination</p>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.destination')}</p>
                 {approval.destination_label && <p className="text-sm text-on-surface font-medium">{approval.destination_label}</p>}
                 <p className="text-xs text-on-surface-variant font-mono break-all">{approval.to_address}</p>
               </div>
@@ -335,7 +337,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             <div className="flex items-start gap-3 p-4">
               <Info className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Action</p>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.action')}</p>
                 <p className="text-sm text-on-surface capitalize">{approval.action.replace(/_/g, ' ')}</p>
                 {approval.memo && <p className="text-xs text-on-surface-variant mt-1">{approval.memo}</p>}
               </div>
@@ -346,7 +348,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             <div className="flex items-start gap-3 p-4">
               <Zap className="w-5 h-5 text-tertiary mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">Network Fee</p>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.networkFee')}</p>
                 <p className="text-sm text-on-surface font-mono">{approval.network_fee}</p>
               </div>
             </div>
@@ -356,7 +358,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             <div className="flex items-start gap-3 p-4">
               <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">TX Hash</p>
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.txHash')}</p>
                 <p className="text-xs text-primary font-mono break-all">{approval.tx_hash}</p>
               </div>
             </div>
@@ -371,7 +373,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
                 <span className={`text-[10px] font-black ${riskColorClass(approval.risk_level).split(' ')[0]}`}>{riskLabel(approval.risk_level)}</span>
               </div>
               <div>
-                <p className="text-sm font-bold text-on-surface">{riskTitle(approval.risk_level)}</p>
+                <p className="text-sm font-bold text-on-surface">{t(riskTitleKey(approval.risk_level))}</p>
               </div>
             </div>
             {approval.risk_details && approval.risk_details.length > 0 && (
@@ -397,7 +399,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             className="w-full py-3.5 rounded-xl primary-gradient text-white font-bold flex items-center justify-center gap-2 shadow-[0_8px_30px_rgba(124,58,237,0.3)] hover:shadow-[0_12px_40px_rgba(124,58,237,0.5)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             {approving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Fingerprint className="w-5 h-5" />}
-            {approving ? 'Verifying...' : 'Authorize with Passkey'}
+            {approving ? t('approval.verifying') : t('approval.authorize')}
           </button>
           <button
             onClick={handleReject}
@@ -405,10 +407,10 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             className="w-full py-3 rounded-xl bg-surface-container border border-outline-variant/20 text-error/80 hover:text-error hover:bg-error/10 hover:border-error/30 active:scale-[0.98] transition-all text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {rejecting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {rejecting ? 'Rejecting...' : 'Reject Transaction'}
+            {rejecting ? t('approval.rejecting') : t('approval.reject')}
           </button>
           <p className="text-[9px] text-center text-on-surface-variant uppercase tracking-widest">
-            By authorizing, you confirm this action aligns with your risk parameters.
+            {t('approval.disclaimer')}
           </p>
         </div>
       ) : (
@@ -422,11 +424,11 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             approval.status === 'rejected' ? 'text-red-400' : 'text-slate-400'
           }`} />
           <p className="font-headline font-bold text-on-surface text-sm capitalize">
-            {approval.status === 'approved' ? 'Transaction Authorized' :
-             approval.status === 'rejected' ? 'Transaction Rejected' : 'Request Expired'}
+            {approval.status === 'approved' ? t('approval.txAuthorized') :
+             approval.status === 'rejected' ? t('approval.txRejected') : t('approval.txExpired')}
           </p>
           <button onClick={onBack} className="px-6 py-2 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface text-sm font-medium transition-all">
-            Back to Approvals
+            {t('approval.backToApprovals')}
           </button>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, type ChangeEvent, type FormEvent } fr
 import { Shield, Loader2, Save } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { WalletPolicy } from '../../types';
 
 // Approval threshold slider: 0 → disabled, 1–10000 SOL range (log scale label)
@@ -14,6 +15,7 @@ function formatAmount(value: string | undefined): string {
 
 export default function PolicyPanel({ walletId }: { walletId: string }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,10 +42,10 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
       setWhitelistOnly(p.whitelist_only ?? false);
       setLoaded(true);
     } else {
-      toast(res.error ?? 'Failed to load policy', 'error');
+      toast(res.error ?? t('policy.loadError'), 'error');
     }
     setLoading(false);
-  }, [walletId, toast]);
+  }, [walletId, toast, t]);
 
   useEffect(() => {
     loadPolicy();
@@ -84,9 +86,9 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
     });
 
     if (res.success) {
-      toast('Policy saved', 'success');
+      toast(t('policy.savedSuccess'), 'success');
     } else {
-      toast(res.error ?? 'Failed to save policy', 'error');
+      toast(res.error ?? t('policy.saveFail'), 'error');
     }
     setSaving(false);
   };
@@ -99,8 +101,8 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
           <Shield className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <p className="font-headline font-bold text-on-surface leading-tight">Spend Policy</p>
-          <p className="text-xs text-on-surface-variant">Transaction limits and approval rules</p>
+          <p className="font-headline font-bold text-on-surface leading-tight">{t('policy.spendTitle')}</p>
+          <p className="text-xs text-on-surface-variant">{t('policy.spendSubtitle')}</p>
         </div>
       </div>
 
@@ -108,7 +110,7 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
       {loading ? (
         <div className="flex items-center justify-center py-16 gap-3 text-on-surface-variant">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm">Loading policy…</span>
+          <span className="text-sm">{t('policy.loading')}</span>
         </div>
       ) : (
         <form onSubmit={handleSave} className="p-6 flex flex-col gap-7">
@@ -116,10 +118,10 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
           {/* ── Max amount per transaction ── */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-on-surface">
-              Max transaction amount
+              {t('policy.maxTransactionAmount')}
             </label>
             <p className="text-xs text-on-surface-variant">
-              Hard cap for a single transaction. Leave blank to allow any amount.
+              {t('policy.maxTransactionDesc')}
             </p>
             <div className="relative mt-1">
               <input
@@ -128,11 +130,11 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
                 step="any"
                 value={maxAmount}
                 onChange={e => setMaxAmount(e.target.value)}
-                placeholder="No limit"
+                placeholder={t('policy.noLimit')}
                 className="w-full bg-surface-container-high border border-outline-variant/30 rounded-xl px-4 py-2.5 pr-16 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-colors"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-on-surface-variant pointer-events-none">
-                tokens
+                {t('policy.tokens')}
               </span>
             </div>
           </div>
@@ -141,18 +143,18 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-on-surface">
-                Require approval above
+                {t('policy.requireApprovalAbove')}
               </label>
               <span
                 className={`text-sm font-bold tabular-nums ${
                   sliderValue === 0 ? 'text-outline' : 'text-primary'
                 }`}
               >
-                {sliderValue === 0 ? 'Disabled' : `${sliderValue} tokens`}
+                {sliderValue === 0 ? t('policy.disabled') : `${sliderValue} ${t('policy.tokens')}`}
               </span>
             </div>
             <p className="text-xs text-on-surface-variant">
-              Transactions above this threshold will require manual approval. Drag to 0 to disable.
+              {t('policy.approvalThresholdDesc')}
             </p>
 
             {/* Slider */}
@@ -167,7 +169,7 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
                 className="w-full"
               />
               <div className="flex justify-between text-[10px] text-outline mt-1 select-none">
-                <span>Off</span>
+                <span>{t('policy.off')}</span>
                 <span>100</span>
                 <span>1 000</span>
                 <span>5 000</span>
@@ -183,11 +185,11 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
                 step="any"
                 value={approvalThreshold}
                 onChange={handleThresholdInput}
-                placeholder="Disabled (0)"
+                placeholder={t('policy.disabledZero')}
                 className="w-full bg-surface-container-high border border-outline-variant/30 rounded-xl px-4 py-2.5 pr-16 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-colors"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-on-surface-variant pointer-events-none">
-                tokens
+                {t('policy.tokens')}
               </span>
             </div>
           </div>
@@ -195,10 +197,9 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
           {/* ── Whitelist only toggle ── */}
           <div className="flex items-start justify-between gap-6 bg-surface-container rounded-2xl border border-outline-variant/15 px-5 py-4">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-semibold text-on-surface">Whitelist-only mode</p>
+              <p className="text-sm font-semibold text-on-surface">{t('policy.whitelistOnly')}</p>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                When enabled, transactions are only allowed to addresses on the whitelist.
-                All other destinations are blocked.
+                {t('policy.whitelistOnlyDesc')}
               </p>
             </div>
 
@@ -217,7 +218,7 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
                   whitelistOnly ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
-              <span className="sr-only">{whitelistOnly ? 'Enabled' : 'Disabled'}</span>
+              <span className="sr-only">{whitelistOnly ? t('policy.enabled') : t('policy.disabled')}</span>
             </button>
           </div>
 
@@ -225,25 +226,25 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
           {loaded && (
             <div className="rounded-2xl bg-surface-container border border-outline-variant/15 px-5 py-4">
               <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
-                Current policy
+                {t('policy.current')}
               </p>
               <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-outline">Max amount</dt>
+                  <dt className="text-xs text-outline">{t('policy.maxAmount')}</dt>
                   <dd className="font-semibold text-on-surface">
-                    {maxAmount ? `${maxAmount} tokens` : <span className="text-outline font-normal">Unlimited</span>}
+                    {maxAmount ? `${maxAmount} ${t('policy.tokens')}` : <span className="text-outline font-normal">{t('policy.unlimited')}</span>}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-outline">Approval threshold</dt>
+                  <dt className="text-xs text-outline">{t('policy.threshold')}</dt>
                   <dd className="font-semibold text-on-surface">
-                    {approvalThreshold ? `> ${approvalThreshold} tokens` : <span className="text-outline font-normal">Disabled</span>}
+                    {approvalThreshold ? `> ${approvalThreshold} ${t('policy.tokens')}` : <span className="text-outline font-normal">{t('policy.disabled')}</span>}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-outline">Whitelist-only</dt>
+                  <dt className="text-xs text-outline">{t('policy.whitelistOnly')}</dt>
                   <dd className={`font-semibold ${whitelistOnly ? 'text-primary' : 'text-outline font-normal'}`}>
-                    {whitelistOnly ? 'Enabled' : 'Disabled'}
+                    {whitelistOnly ? t('policy.enabled') : t('policy.disabled')}
                   </dd>
                 </div>
               </dl>
@@ -258,8 +259,8 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl primary-gradient text-white text-sm font-bold glow-primary disabled:opacity-60 transition-opacity"
             >
               {saving
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
-                : <><Save className="w-4 h-4" /> Save policy</>
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('policy.saving')}</>
+                : <><Save className="w-4 h-4" /> {t('policy.save')}</>
               }
             </button>
           </div>

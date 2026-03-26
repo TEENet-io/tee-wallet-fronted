@@ -3,6 +3,7 @@ import { FileCode2, Plus, Trash2, Loader2, CheckSquare, Square, ExternalLink } f
 import { api } from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../ConfirmDialog';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { AllowedContract } from '../../types';
 
 // Default well-known contracts that are commonly used
@@ -36,6 +37,7 @@ interface ProgramPanelProps {
 export default function ProgramPanel({ walletId }: ProgramPanelProps) {
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
+  const { t } = useLanguage();
 
   const [contracts, setContracts] = useState<AllowedContract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +78,9 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
 
   async function handleRemove(contract: AllowedContract) {
     const ok = await confirm({
-      title: 'Remove Program',
-      message: `Remove "${contract.label || truncateAddr(contract.contract_address)}" from the whitelist?`,
-      confirmText: 'Remove',
+      title: t('program.removeTitle'),
+      message: `${t('program.removeMessage')} "${contract.label || truncateAddr(contract.contract_address)}"?`,
+      confirmText: t('program.removeBtn'),
       danger: true,
     });
     if (!ok) return;
@@ -87,10 +89,10 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
     try {
       const res = await api(`/api/wallets/${walletId}/contracts/${contract.id}`, { method: 'DELETE' });
       if (res.success) {
-        toast('Program removed', 'success');
+        toast(t('program.removeSuccess'), 'success');
         await loadContracts();
       } else {
-        toast(res.error || 'Failed to remove', 'error');
+        toast(res.error || t('program.removeFail'), 'error');
       }
     } finally {
       setRemoving(null);
@@ -105,10 +107,10 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
         body: JSON.stringify({ contract_address: program.address, label: program.label, symbol: program.abi_hint }),
       });
       if (res.success) {
-        toast(`${program.label} added`, 'success');
+        toast(`${program.label} ${t('program.addedSuffix')}`, 'success');
         await loadContracts();
       } else {
-        toast(res.error || 'Failed to add', 'error');
+        toast(res.error || t('program.addFail'), 'error');
       }
     } finally {
       setAdding(false);
@@ -117,7 +119,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
 
   async function handleAddCustom(e: FormEvent) {
     e.preventDefault();
-    if (!newAddress.trim()) { toast('Address is required', 'error'); return; }
+    if (!newAddress.trim()) { toast(t('program.addressRequired'), 'error'); return; }
 
     setAdding(true);
     try {
@@ -125,19 +127,19 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
         method: 'POST',
         body: JSON.stringify({
           contract_address: newAddress.trim(),
-          label: newLabel.trim() || 'Custom Contract',
+          label: newLabel.trim() || t('program.customContract'),
           symbol: newAbiHint.trim() || undefined,
         }),
       });
       if (res.success) {
-        toast('Contract added', 'success');
+        toast(t('program.contractAdded'), 'success');
         setNewLabel('');
         setNewAddress('');
         setNewAbiHint('');
         setShowAdd(false);
         await loadContracts();
       } else {
-        toast(res.error || 'Failed to add', 'error');
+        toast(res.error || t('program.addFail'), 'error');
       }
     } finally {
       setAdding(false);
@@ -157,10 +159,10 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
           <div>
             <h2 className="text-xl font-headline font-bold text-on-surface flex items-center gap-2">
               <FileCode2 className="w-5 h-5 text-primary" />
-              Whitelisted Programs
+              {t('program.title')}
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
-              Approved contracts and tokens your agent can interact with.
+              {t('program.subtitle')}
             </p>
           </div>
           <button
@@ -168,25 +170,25 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
             className="flex items-center gap-2 px-4 py-2 rounded-xl primary-gradient text-white text-sm font-bold hover:opacity-90 transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            New
+            {t('program.newBtn')}
           </button>
         </div>
 
         {/* Add Custom Form */}
         {showAdd && (
           <form onSubmit={handleAddCustom} className="bg-surface-container rounded-2xl p-6 ghost-border space-y-4">
-            <h3 className="font-headline font-semibold text-on-surface text-sm">Add Custom Contract</h3>
+            <h3 className="font-headline font-semibold text-on-surface text-sm">{t('program.addCustomTitle')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input
                 value={newAddress}
                 onChange={e => setNewAddress(e.target.value)}
-                placeholder="Contract address (0x…)"
+                placeholder={t('program.addressPlaceholder')}
                 className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary font-mono md:col-span-2"
               />
               <input
                 value={newLabel}
                 onChange={e => setNewLabel(e.target.value)}
-                placeholder="Label"
+                placeholder={t('program.labelPlaceholder')}
                 className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary"
               />
             </div>
@@ -194,7 +196,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
               <input
                 value={newAbiHint}
                 onChange={e => setNewAbiHint(e.target.value)}
-                placeholder="Type (e.g. DEX, Stablecoin, Lending)"
+                placeholder={t('program.typePlaceholder')}
                 className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary"
               />
               <button
@@ -203,7 +205,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
                 className="px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all flex items-center gap-2"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Add
+                {t('program.addBtn')}
               </button>
             </div>
           </form>
@@ -212,7 +214,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
         {/* Quick-add defaults */}
         {availableDefaults.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Quick Add</p>
+            <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">{t('program.quickAdd')}</p>
             <div className="flex flex-wrap gap-2">
               {availableDefaults.map(p => (
                 <button
@@ -248,8 +250,8 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
         ) : contracts.length === 0 ? (
           <div className="bg-surface-container-low rounded-2xl p-12 ghost-border flex flex-col items-center justify-center gap-3 text-center">
             <FileCode2 className="w-10 h-10 text-outline" />
-            <p className="text-on-surface-variant text-sm">No programs whitelisted yet.</p>
-            <p className="text-outline text-xs">Add contracts above to define what your agent can interact with.</p>
+            <p className="text-on-surface-variant text-sm">{t('program.empty')}</p>
+            <p className="text-outline text-xs">{t('program.emptyDesc')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -283,7 +285,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-bold text-on-surface">{contract.label || 'Unnamed'}</p>
+                      <p className="font-bold text-on-surface">{contract.label || t('program.unnamed')}</p>
                       {contract.symbol && (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor(contract.symbol)}`}>
                           {contract.symbol}
@@ -299,7 +301,7 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
                       onClick={() => handleRemove(contract)}
                       disabled={isRemoving}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all disabled:opacity-50"
-                      title="Remove"
+                      title={t('program.removeBtn')}
                     >
                       {isRemoving
                         ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -316,8 +318,8 @@ export default function ProgramPanel({ walletId }: ProgramPanelProps) {
         {/* Summary */}
         {contracts.length > 0 && (
           <div className="flex items-center justify-between px-2 text-xs text-on-surface-variant">
-            <span>{selected.size} of {contracts.length} selected</span>
-            <span>{contracts.length} program{contracts.length !== 1 ? 's' : ''} whitelisted</span>
+            <span>{selected.size} {t('program.of')} {contracts.length} {t('program.selected')}</span>
+            <span>{contracts.length} {contracts.length !== 1 ? t('program.programs') : t('program.program')} {t('program.whitelisted')}</span>
           </div>
         )}
       </div>

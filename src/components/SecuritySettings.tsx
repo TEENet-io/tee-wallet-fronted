@@ -7,6 +7,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from './ConfirmDialog';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { APIKey } from '../types';
 
 // Maps a key index to one of the decorative icons used in the original design.
@@ -45,6 +46,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   const auth = useAuth();
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
+  const { t } = useLanguage();
 
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [keysLoading, setKeysLoading] = useState(true);
@@ -67,12 +69,12 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       if (res.success && Array.isArray(res.keys)) {
         setKeys(res.keys);
       } else {
-        toast(res.error || 'Failed to load API keys', 'error');
+        toast(res.error || t('settings.keysLoadError'), 'error');
       }
     } finally {
       setKeysLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => { loadKeys(); }, [loadKeys]);
 
@@ -92,7 +94,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       );
 
       if (!res.success) {
-        toast(res.error || 'Failed to generate key', 'error');
+        toast(res.error || t('settings.generateFail'), 'error');
         return;
       }
 
@@ -106,7 +108,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         await loadKeys();
       }
 
-      toast('New API key generated. Copy it now — it will not be shown again.', 'success', 8000);
+      toast(t('settings.generateSuccess'), 'success', 8000);
     } finally {
       setGenerating(false);
     }
@@ -117,9 +119,9 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   // ---------------------------------------------------------------------------
   async function handleRevokeKey(key: APIKey) {
     const ok = await confirm({
-      title: 'Revoke API Key',
-      message: `Revoke key ending in ${key.prefix}?\n\nAny agent using this key will immediately lose access. This cannot be undone.`,
-      confirmText: 'Revoke Key',
+      title: t('settings.revokeTitle'),
+      message: `${t('settings.revokeMessagePrefix')} ${key.prefix}?\n\n${t('settings.revokeConfirm')}`,
+      confirmText: t('settings.revokeBtn'),
       danger: true,
     });
     if (!ok) return;
@@ -135,11 +137,11 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       });
 
       if (!res.success) {
-        toast(res.error || 'Failed to revoke key', 'error');
+        toast(res.error || t('settings.revokeFail'), 'error');
         return;
       }
 
-      toast('API key revoked', 'success');
+      toast(t('settings.revokeSuccess'), 'success');
       // Optimistically mark as revoked in local state, then reload.
       setKeys(prev =>
         prev.map(k => k.id === key.id ? { ...k, status: 'revoked' as const } : k),
@@ -165,9 +167,9 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
 
   async function handleDeleteAccount() {
     const ok = await confirm({
-      title: 'Delete Account',
-      message: 'This will permanently erase your account, all wallets, API keys, and transaction history.\n\nThis action is irreversible.',
-      confirmText: 'Delete Account',
+      title: t('settings.deleteTitle'),
+      message: t('settings.deleteConfirm'),
+      confirmText: t('settings.deleteAccount'),
       danger: true,
     });
     if (!ok) return;
@@ -203,11 +205,10 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         <section className="gap-6">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-on-surface">
-              Security & API Control
+              {t('settings.title')}
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl">
-              Manage your autonomous observer's gateway. Control permissions, revoke access,
-              and monitor active sessions across the neural network.
+              {t('settings.subtitle')}
             </p>
           </div>
         </section>
@@ -217,11 +218,11 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
           <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-secondary/10 border border-secondary/30">
             <div className="space-y-1 min-w-0">
               <p className="text-xs text-secondary uppercase tracking-widest font-bold">
-                New Key — Copy Now
+                {t('settings.newKey')}
               </p>
               <code className="block text-sm text-on-surface break-all font-mono">{newKey}</code>
               <p className="text-xs text-slate-500">
-                This key will not be shown again once you leave this page.
+                {t('settings.newKeyWarning')}
               </p>
             </div>
             <button
@@ -229,7 +230,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/20 text-secondary text-sm font-semibold hover:bg-secondary/30 transition-colors"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('settings.copied') : t('settings.copy')}
             </button>
           </div>
         )}
@@ -238,9 +239,9 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         <section className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-1">
-              <h2 className="text-2xl font-headline font-semibold text-on-surface">API Keys</h2>
+              <h2 className="text-2xl font-headline font-semibold text-on-surface">{t('settings.apiKeys')}</h2>
               <p className="text-sm text-slate-500">
-                Programmatic access for external autonomous modules.
+                {t('settings.apiKeysDesc')}
               </p>
             </div>
             <button
@@ -249,7 +250,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
               className="group flex items-center gap-2 px-6 py-3 primary-gradient rounded-xl text-on-primary-container font-semibold glow-primary hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
             >
               <Fingerprint className="w-5 h-5" />
-              {generating ? 'Verifying…' : 'Generate New Key'}
+              {generating ? t('settings.verifying') : t('settings.generateKey')}
             </button>
           </div>
 
@@ -276,7 +277,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
               ))
             ) : keys.length === 0 ? (
               <div className="col-span-full py-12 text-center text-slate-500 text-sm">
-                No API keys yet. Generate one to get started.
+                {t('settings.noKeys')}
               </div>
             ) : (
               keys.map((key, index) => {
@@ -298,7 +299,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                         onClick={() => handleRevokeKey(key)}
                         disabled={isRevoking}
                         className="text-slate-500 hover:text-error transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title="Revoke Key"
+                        title={t('settings.revokeTitle')}
                       >
                         <Ban className="w-5 h-5" />
                       </button>
@@ -310,10 +311,10 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                       {maskKey(key.prefix)}
                     </code>
                     <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
-                      <span>Created {timeAgo(key.created_at)}</span>
+                      <span>{t('common.created')} {timeAgo(key.created_at)}</span>
                       <span className="flex items-center gap-1 text-secondary">
                         <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                        Active
+                        {t('settings.active')}
                       </span>
                     </div>
                   </div>
@@ -335,9 +336,9 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                       {maskKey(key.prefix)}
                     </code>
                     <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
-                      <span>Revoked {timeAgo(key.created_at)}</span>
+                      <span>{t('common.revoked')} {timeAgo(key.created_at)}</span>
                       <span className="flex items-center gap-1 text-error">
-                        Inactive
+                        {t('settings.inactive')}
                       </span>
                     </div>
                   </div>
@@ -347,14 +348,12 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
           </div>
         </section>
 
-
-
         {/* Danger Zone */}
         <section className="space-y-4">
           <div className="bg-surface-container-low rounded-2xl ghost-border overflow-hidden">
             <div className="p-6 bg-error/5 flex flex-col gap-4">
               <p className="text-xs text-error/80 uppercase tracking-widest font-bold">
-                Danger Zone
+                {t('settings.dangerZone')}
               </p>
               <div className="flex flex-wrap gap-3">
                 <button
@@ -363,7 +362,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                   className="px-4 py-2 rounded-lg bg-surface-container-highest text-sm font-medium text-on-surface hover:bg-surface-variant transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <LogOut className="w-4 h-4" />
-                  {dangerLoading ? 'Working…' : 'Logout Global'}
+                  {dangerLoading ? t('settings.working') : t('settings.logoutGlobal')}
                 </button>
                 <button
                   onClick={handleDeleteAccount}
@@ -371,7 +370,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                   className="px-4 py-2 rounded-lg border border-error/20 text-sm font-medium text-error hover:bg-error/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Delete Account
+                  {t('settings.deleteAccount')}
                 </button>
               </div>
             </div>
@@ -381,7 +380,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         {/* Aesthetic Data Scan Decorative */}
         <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent relative mt-12">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-surface text-[10px] text-slate-600 uppercase tracking-[0.4em] font-bold">
-            End Neural Stream
+            {t('settings.endStream')}
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, AlertTriangle } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { api } from '../lib/api';
 import type { DailySpent } from '../types';
 import PolicyPanel from '../components/wallet/PolicyPanel';
@@ -9,12 +10,17 @@ import ProgramPanel from '../components/wallet/ProgramPanel';
 type TabId = 'policy' | 'program';
 
 function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
+  const { t } = useLanguage();
   const styles = {
     ready: 'bg-emerald-400',
     creating: 'bg-yellow-400 animate-pulse',
     error: 'bg-error',
   };
-  const labels = { ready: 'Ready', creating: 'Creating', error: 'Error' };
+  const labels = {
+    ready: t('wallet.status.ready'),
+    creating: t('wallet.status.creating'),
+    error: t('wallet.status.error'),
+  };
   const textStyles = {
     ready: 'text-emerald-400',
     creating: 'text-yellow-400',
@@ -29,6 +35,7 @@ function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
 }
 
 function DailySpendBanner({ spent }: { spent: DailySpent }) {
+  const { t } = useLanguage();
   const spentNum = parseFloat(spent.daily_spent_usd) || 0;
   const limitNum = parseFloat(spent.daily_limit_usd) || 0;
   const remainNum = parseFloat(spent.remaining_usd) || 0;
@@ -50,7 +57,7 @@ function DailySpendBanner({ spent }: { spent: DailySpent }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-            Daily Spend
+            {t('wallet.dailySpend')}
           </span>
           <span className="text-xs text-on-surface-variant">
             ${spentNum.toFixed(2)} / ${limitNum.toFixed(2)} USD
@@ -66,12 +73,12 @@ function DailySpendBanner({ spent }: { spent: DailySpent }) {
         </div>
         <div className="flex items-center justify-between mt-1.5">
           <span className={`text-xs font-medium ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
-            {isExceeded ? 'Limit exceeded — transactions require approval' :
-             isHigh ? `$${remainNum.toFixed(2)} remaining` :
-             `$${remainNum.toFixed(2)} remaining`}
+            {isExceeded
+              ? t('wallet.limitExceeded')
+              : `$${remainNum.toFixed(2)} ${t('wallet.remaining')}`}
           </span>
           {resetTime && (
-            <span className="text-[10px] text-on-surface-variant">Resets {resetTime}</span>
+            <span className="text-[10px] text-on-surface-variant">{t('wallet.resets')} {resetTime}</span>
           )}
         </div>
       </div>
@@ -86,6 +93,7 @@ interface WalletDetailProps {
 
 export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const { wallets, balances, refreshBalance, getChainFamily, getChainCurrency, chainsMap, loading } = useWallets();
+  const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<TabId>('policy');
   const [copied, setCopied] = useState(false);
@@ -128,7 +136,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
     return (
       <div className="animate-in fade-in duration-500 space-y-6">
         <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Wallets
+          <ArrowLeft className="w-4 h-4" /> {t('wallet.back')}
         </button>
         <div className="bg-surface-container-low rounded-3xl p-8 ghost-border">
           <div className="space-y-4">
@@ -144,12 +152,12 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
     return (
       <div className="animate-in fade-in duration-500 space-y-6">
         <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Wallets
+          <ArrowLeft className="w-4 h-4" /> {t('wallet.back')}
         </button>
         <div className="bg-surface-container-low rounded-3xl p-12 ghost-border flex flex-col items-center justify-center gap-4 text-center">
-          <p className="font-headline font-bold text-on-surface text-xl">Wallet not found</p>
+          <p className="font-headline font-bold text-on-surface text-xl">{t('wallet.notFound')}</p>
           <button onClick={onBack} className="mt-2 px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold hover:opacity-90 transition-all">
-            Back to Wallets
+            {t('wallet.back')}
           </button>
         </div>
       </div>
@@ -161,7 +169,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       {/* Back */}
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        Back to Wallets
+        {t('wallet.back')}
       </button>
 
       {/* Wallet header */}
@@ -186,7 +194,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
               <code className="text-xs text-on-surface-variant font-mono bg-surface-container-high px-3 py-1.5 rounded-lg ghost-border break-all">
                 {wallet.address}
               </code>
-              <button onClick={handleCopy} title="Copy address" className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
+              <button onClick={handleCopy} title={t('wallet.copyAddress')} className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
@@ -195,11 +203,11 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           {wallet.status === 'ready' && (
             <div className="flex-shrink-0 text-left md:text-right flex flex-row md:flex-col items-center md:items-end gap-4 md:gap-2">
               <div>
-                <p className="text-xs text-outline uppercase tracking-widest font-label mb-1">Balance</p>
+                <p className="text-xs text-outline uppercase tracking-widest font-label mb-1">{t('wallet.balance')}</p>
                 <p className="font-headline font-black text-2xl text-on-surface tracking-tighter">{balance ?? '—'}</p>
                 <p className="text-xs text-secondary font-bold uppercase tracking-widest">{currency}</p>
               </div>
-              <button onClick={handleRefresh} disabled={refreshing} title="Refresh balance" className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border disabled:opacity-50">
+              <button onClick={handleRefresh} disabled={refreshing} title={t('wallets.refreshBalance')} className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
@@ -223,7 +231,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
-          Threshold
+          {t('wallet.tab.threshold')}
         </button>
         <button
           onClick={() => setActiveTab('program')}
@@ -234,7 +242,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           }`}
         >
           <FileCode2 className="w-4 h-4" />
-          Program
+          {t('wallet.tab.program')}
         </button>
       </div>
 
