@@ -42,10 +42,13 @@ export interface DailySpent {
 }
 
 export interface WalletPolicy {
+  id?: number;
   wallet_id: string;
-  max_amount?: string;
-  require_approval_above?: string;
-  whitelist_only?: boolean;
+  threshold_usd: string;
+  daily_limit_usd?: string;
+  daily_spent_usd?: string;
+  enabled?: boolean;
+  created_at?: string;
 }
 
 export interface Approval {
