@@ -38,9 +38,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshBalance = useCallback(async (id: string) => {
-    const res = await api<{ balance?: string }>(`/api/wallets/${id}/balance`);
-    if (res.success && res.balance !== undefined) {
-      setBalances(prev => ({ ...prev, [id]: res.balance! }));
+    const res = await api<{ data?: { balance?: string; currency?: string } }>(`/api/wallets/${id}/balance`);
+    if (res.success && res.data?.balance !== undefined) {
+      const display = res.data.currency
+        ? `${res.data.balance} ${res.data.currency}`
+        : res.data.balance;
+      setBalances(prev => ({ ...prev, [id]: display }));
     }
   }, []);
 
