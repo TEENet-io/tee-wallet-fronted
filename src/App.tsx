@@ -66,74 +66,64 @@ export default function App() {
   const isActive = (page: string) => currentPage === page || currentPage.startsWith(page);
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface font-body selection:bg-primary/30 relative">
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-[10%] left-[5%] w-[50vw] h-[50vw] bg-primary/5 blur-[150px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[5%] right-[5%] w-[40vw] h-[40vw] bg-secondary/5 blur-[130px] rounded-full"></div>
-      </div>
-
+    <div className="min-h-screen bg-surface text-on-surface font-body selection:bg-primary/20 relative">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface-container-lowest shadow-[0_20px_50px_rgba(124,58,237,0.1)]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-container flex items-center justify-center">
-            <Shield className="w-5 h-5 text-on-primary-container" />
-          </div>
-          <span className="text-2xl font-black text-primary tracking-tighter font-headline">OpenClaw</span>
+      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-14 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="flex items-center gap-2.5">
+          <Shield className="w-5 h-5 text-primary" />
+          <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">OpenClaw</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex gap-6 items-center mr-4">
-            <button onClick={nav.wallets} className={`font-label text-sm uppercase tracking-widest transition-colors ${isActive('wallet') ? 'text-secondary font-bold' : 'text-on-surface-variant hover:text-secondary'}`}>{t('nav.wallets')}</button>
-            <button onClick={nav.approvals} className={`font-label text-sm uppercase tracking-widest transition-colors ${isActive('approval') ? 'text-secondary font-bold' : 'text-on-surface-variant hover:text-secondary'}`}>{t('nav.approvals')}</button>
-            <button onClick={nav.history} className={`font-label text-sm uppercase tracking-widest transition-colors ${currentPage === 'history' ? 'text-secondary font-bold' : 'text-on-surface-variant hover:text-secondary'}`}>{t('nav.activity')}</button>
+        <div className="flex items-center gap-1">
+          <div className="hidden md:flex gap-1 items-center mr-2">
+            <button onClick={nav.wallets} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('wallet') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.wallets')}</button>
+            <button onClick={nav.approvals} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('approval') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.approvals')}</button>
+            <button onClick={nav.history} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'history' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.activity')}</button>
           </div>
 
-          {/* Language toggle */}
           <button
             onClick={toggleLang}
-            className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-variant transition-all active:scale-95"
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors"
             title={lang === 'en' ? '切换中文' : 'Switch to English'}
           >
             <Languages className="w-4 h-4 text-on-surface-variant" />
           </button>
 
-          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-variant transition-all active:scale-95"
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors"
             title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
           >
             {theme === 'dark' ? <Sun className="w-4 h-4 text-on-surface-variant" /> : <Moon className="w-4 h-4 text-on-surface-variant" />}
           </button>
 
-          {/* Settings */}
-          <button onClick={nav.settings} className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-variant transition-all active:scale-95">
-            <Shield className="w-5 h-5 text-primary" />
+          <button onClick={nav.settings} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+            <Settings className="w-4 h-4 text-on-surface-variant" />
           </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+      <main className="pt-20 pb-28 px-4 sm:px-6 max-w-4xl mx-auto">
         {content}
       </main>
 
       {/* Bottom Nav (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-lowest/80 backdrop-blur-2xl border-t border-outline-variant/10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] rounded-t-2xl">
-        <button onClick={nav.wallets} className={`flex flex-col items-center justify-center transition-colors ${isActive('wallet') ? 'text-white bg-gradient-to-br from-primary-container to-primary rounded-xl px-4 py-1 shadow-[0_0_15px_rgba(124,58,237,0.4)]' : 'text-on-surface-variant opacity-70 hover:text-secondary'}`}>
-          <Wallet className="w-6 h-6 mb-1" />
-          <span className="font-label text-[10px] uppercase tracking-widest font-semibold">{t('nav.wallets')}</span>
+      <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10">
+        <button onClick={nav.wallets} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${isActive('wallet') ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <Wallet className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] font-medium">{t('nav.wallets')}</span>
         </button>
-        <button onClick={nav.approvals} className={`flex flex-col items-center justify-center transition-colors ${isActive('approval') ? 'text-white bg-gradient-to-br from-primary-container to-primary rounded-xl px-4 py-1 shadow-[0_0_15px_rgba(124,58,237,0.4)]' : 'text-on-surface-variant opacity-70 hover:text-secondary'}`}>
-          <ShieldCheck className="w-6 h-6 mb-1" />
-          <span className="font-label text-[10px] uppercase tracking-widest font-semibold">{t('nav.approvals')}</span>
+        <button onClick={nav.approvals} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${isActive('approval') ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <ShieldCheck className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] font-medium">{t('nav.approvals')}</span>
         </button>
-        <button onClick={nav.history} className={`flex flex-col items-center justify-center transition-colors ${currentPage === 'history' ? 'text-white bg-gradient-to-br from-primary-container to-primary rounded-xl px-4 py-1 shadow-[0_0_15px_rgba(124,58,237,0.4)]' : 'text-on-surface-variant opacity-70 hover:text-secondary'}`}>
-          <Activity className="w-6 h-6 mb-1" />
-          <span className="font-label text-[10px] uppercase tracking-widest font-semibold">{t('nav.activity')}</span>
+        <button onClick={nav.history} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${currentPage === 'history' ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <Activity className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] font-medium">{t('nav.activity')}</span>
         </button>
-        <button onClick={nav.settings} className={`flex flex-col items-center justify-center transition-colors ${currentPage === 'settings' ? 'text-white bg-gradient-to-br from-primary-container to-primary rounded-xl px-4 py-1 shadow-[0_0_15px_rgba(124,58,237,0.4)]' : 'text-on-surface-variant opacity-70 hover:text-secondary'}`}>
-          <Settings className="w-6 h-6 mb-1" />
-          <span className="font-label text-[10px] uppercase tracking-widest font-semibold">{t('nav.settings')}</span>
+        <button onClick={nav.settings} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${currentPage === 'settings' ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <Settings className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] font-medium">{t('nav.settings')}</span>
         </button>
       </nav>
     </div>

@@ -31,9 +31,14 @@ export interface AllowedContract {
   label: string;
   symbol?: string;
   decimals?: number;
-  allowed_methods?: string;
-  auto_approve?: boolean;
   created_at?: string;
+}
+
+export interface DailySpent {
+  daily_spent_usd: string;
+  daily_limit_usd: string;
+  remaining_usd: string;
+  reset_at: string;
 }
 
 export interface WalletPolicy {

@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, AlertTriangle } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
+import { api } from '../lib/api';
+import type { DailySpent } from '../types';
 import PolicyPanel from '../components/wallet/PolicyPanel';
 import ProgramPanel from '../components/wallet/ProgramPanel';
 
@@ -26,6 +28,57 @@ function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
   );
 }
 
+function DailySpendBanner({ spent }: { spent: DailySpent }) {
+  const spentNum = parseFloat(spent.daily_spent_usd) || 0;
+  const limitNum = parseFloat(spent.daily_limit_usd) || 0;
+  const remainNum = parseFloat(spent.remaining_usd) || 0;
+  const pct = limitNum > 0 ? Math.min(1, spentNum / limitNum) : 0;
+  const isHigh = pct >= 0.8;
+  const isExceeded = pct >= 1;
+
+  const resetTime = spent.reset_at
+    ? new Date(spent.reset_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  return (
+    <div className={`rounded-2xl p-4 ghost-border flex flex-col sm:flex-row sm:items-center gap-4 ${
+      isExceeded ? 'bg-error/10 border-error/20' : isHigh ? 'bg-tertiary/10 border-tertiary/20' : 'bg-surface-container-low'
+    }`}>
+      {isHigh && (
+        <AlertTriangle className={`w-5 h-5 shrink-0 ${isExceeded ? 'text-error' : 'text-tertiary'}`} />
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+            Daily Spend
+          </span>
+          <span className="text-xs text-on-surface-variant">
+            ${spentNum.toFixed(2)} / ${limitNum.toFixed(2)} USD
+          </span>
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${
+              isExceeded ? 'bg-error' : isHigh ? 'bg-tertiary' : 'bg-primary'
+            }`}
+            style={{ width: `${pct * 100}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-1.5">
+          <span className={`text-xs font-medium ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+            {isExceeded ? 'Limit exceeded — transactions require approval' :
+             isHigh ? `$${remainNum.toFixed(2)} remaining` :
+             `$${remainNum.toFixed(2)} remaining`}
+          </span>
+          {resetTime && (
+            <span className="text-[10px] text-on-surface-variant">Resets {resetTime}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface WalletDetailProps {
   walletId: string;
   onBack: () => void;
@@ -37,6 +90,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const [activeTab, setActiveTab] = useState<TabId>('policy');
   const [copied, setCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [dailySpent, setDailySpent] = useState<DailySpent | null>(null);
 
   const wallet = wallets.find(w => w.id === walletId);
   const family = wallet ? getChainFamily(wallet.chain) : 'evm';
@@ -44,6 +98,14 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const currency = wallet ? getChainCurrency(wallet.chain) : '';
   const chainLabel = wallet ? (chainsMap[wallet.chain]?.label ?? wallet.chain) : '';
   const balance = wallet ? balances[wallet.id] : undefined;
+
+  // Fetch daily spend on mount
+  useEffect(() => {
+    if (!walletId) return;
+    api<DailySpent>(`/api/wallets/${walletId}/daily-spent`).then(res => {
+      if (res.success) setDailySpent(res);
+    });
+  }, [walletId]);
 
   async function handleCopy() {
     if (!wallet?.address) return;
@@ -144,6 +206,11 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           )}
         </div>
       </div>
+
+      {/* Daily Spend Banner */}
+      {dailySpent && dailySpent.daily_limit_usd && (
+        <DailySpendBanner spent={dailySpent} />
+      )}
 
       {/* Tab bar — only 2 tabs */}
       <div className="flex gap-1 p-1 bg-surface-container-low rounded-2xl ghost-border">

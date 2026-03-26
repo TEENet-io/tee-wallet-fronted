@@ -34,13 +34,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-xl text-sm shadow-lg animate-in slide-in-from-right duration-200 ${
+            className={`flex items-start gap-2 px-4 py-3 rounded-xl text-sm shadow-lg animate-in slide-in-from-right duration-200 ${
               t.type === 'success' ? 'bg-[#052e16] text-[#4ade80] border border-[#14532d]' :
               t.type === 'error' ? 'bg-[#450a0a] text-[#f87171] border border-[#7f1d1d]' :
               'bg-[#0c1a4d] text-[#93c5fd] border border-[#1e3a8a]'
             }`}
           >
-            {t.text}
+            <span className="flex-1">{t.text}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
+              className="shrink-0 opacity-60 hover:opacity-100 transition-opacity text-current"
+            >
+              &#x2715;
+            </button>
           </div>
         ))}
       </div>
