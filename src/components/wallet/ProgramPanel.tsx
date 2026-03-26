@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
-import { FileCode2, Plus, Trash2, Loader2, CheckCircle, XCircle, Pencil, ChevronDown } from 'lucide-react';
+import { FileCode2, Plus, Trash2, Loader2, Pencil } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -39,7 +39,7 @@ function badgeColor(hint?: string): string {
   return 'bg-primary/10 text-primary border border-primary/20';
 }
 
-type ActivePanel = { id: string | number; mode: 'approve' | 'revoke' | 'edit' } | null;
+type ActivePanel = { id: string | number; mode: 'edit' } | null;
 
 interface ProgramPanelProps {
   walletId: string;
@@ -61,13 +61,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
   // Active inline panel: only one open at a time
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [actionBusy, setActionBusy] = useState(false);
-
-  // Approve form
-  const [approveSpender, setApproveSpender] = useState('');
-  const [approveAmount, setApproveAmount] = useState('');
-
-  // Revoke form
-  const [revokeSpender, setRevokeSpender] = useState('');
 
   // Edit form
   const [editLabel, setEditLabel] = useState('');
@@ -93,25 +86,15 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
 
   useEffect(() => { loadContracts(); }, [loadContracts]);
 
-  function togglePanel(id: string | number, mode: 'approve' | 'revoke' | 'edit', contract?: AllowedContract) {
-    if (activePanel?.id === id && activePanel.mode === mode) {
+  function toggleEdit(id: string | number, contract: AllowedContract) {
+    if (activePanel?.id === id) {
       setActivePanel(null);
       return;
     }
-    // Reset all form state
-    setApproveSpender('');
-    setApproveAmount('');
-    setRevokeSpender('');
-    if (mode === 'edit' && contract) {
-      setEditLabel(contract.label || '');
-      setEditSymbol(contract.symbol || '');
-      setEditDecimals(contract.decimals != null ? String(contract.decimals) : '');
-    } else {
-      setEditLabel('');
-      setEditSymbol('');
-      setEditDecimals('');
-    }
-    setActivePanel({ id, mode });
+    setEditLabel(contract.label || '');
+    setEditSymbol(contract.symbol || '');
+    setEditDecimals(contract.decimals != null ? String(contract.decimals) : '');
+    setActivePanel({ id, mode: 'edit' });
   }
 
   async function handleRemove(contract: AllowedContract) {
@@ -140,56 +123,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
       }
     } finally {
       setRemoving(null);
-    }
-  }
-
-  async function handleApprove(e: FormEvent, contract: AllowedContract) {
-    e.preventDefault();
-    if (!approveSpender.trim()) { toast(t('program.spender') + ' required', 'error'); return; }
-    if (!approveAmount.trim()) { toast(t('program.amount') + ' required', 'error'); return; }
-
-    setActionBusy(true);
-    try {
-      const res = await api(`/api/wallets/${walletId}/approve-token`, {
-        method: 'POST',
-        body: JSON.stringify({
-          contract: contract.contract_address,
-          spender: approveSpender.trim(),
-          amount: approveAmount.trim(),
-        }),
-      });
-      if (res.success) {
-        toast(t('program.approveSuccess'), 'success');
-        setActivePanel(null);
-      } else {
-        toast((res as { error?: string }).error || t('program.approveFail'), 'error');
-      }
-    } finally {
-      setActionBusy(false);
-    }
-  }
-
-  async function handleRevoke(e: FormEvent, contract: AllowedContract) {
-    e.preventDefault();
-    if (!revokeSpender.trim()) { toast(t('program.spender') + ' required', 'error'); return; }
-
-    setActionBusy(true);
-    try {
-      const res = await api(`/api/wallets/${walletId}/revoke-approval`, {
-        method: 'POST',
-        body: JSON.stringify({
-          contract: contract.contract_address,
-          spender: revokeSpender.trim(),
-        }),
-      });
-      if (res.success) {
-        toast(t('program.revokeSuccess'), 'success');
-        setActivePanel(null);
-      } else {
-        toast((res as { error?: string }).error || t('program.revokeFail'), 'error');
-      }
-    } finally {
-      setActionBusy(false);
     }
   }
 
@@ -417,41 +350,11 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
                       <p className="text-xs text-on-surface-variant font-mono mt-0.5">{truncateAddr(contract.contract_address)}</p>
                     </div>
 
-                    {/* Action buttons — always visible */}
+                    {/* Action buttons */}
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      {/* Approve token */}
-                      <button
-                        onClick={() => togglePanel(contract.id, 'approve')}
-                        title={t('program.approve')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          panel === 'approve'
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
-                            : 'text-on-surface-variant hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent'
-                        }`}
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">{t('program.approve')}</span>
-                        <ChevronDown className={`w-3 h-3 transition-transform ${panel === 'approve' ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {/* Revoke approval */}
-                      <button
-                        onClick={() => togglePanel(contract.id, 'revoke')}
-                        title={t('program.revoke')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          panel === 'revoke'
-                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
-                            : 'text-on-surface-variant hover:text-amber-400 hover:bg-amber-500/10 border border-transparent'
-                        }`}
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">{t('program.revoke')}</span>
-                        <ChevronDown className={`w-3 h-3 transition-transform ${panel === 'revoke' ? 'rotate-180' : ''}`} />
-                      </button>
-
                       {/* Edit contract */}
                       <button
-                        onClick={() => togglePanel(contract.id, 'edit', contract)}
+                        onClick={() => toggleEdit(contract.id, contract)}
                         title={t('program.edit')}
                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           panel === 'edit'
@@ -461,7 +364,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
                       >
                         <Pencil className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">{t('program.edit')}</span>
-                        <ChevronDown className={`w-3 h-3 transition-transform ${panel === 'edit' ? 'rotate-180' : ''}`} />
                       </button>
 
                       {/* Delete */}
@@ -478,80 +380,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
                       </button>
                     </div>
                   </div>
-
-                  {/* Inline panel: Approve */}
-                  {panel === 'approve' && (
-                    <form
-                      onSubmit={e => handleApprove(e, contract)}
-                      className="border-t border-outline-variant/10 bg-surface-container px-4 py-4 space-y-3"
-                    >
-                      <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">{t('program.approve')}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input
-                          value={approveSpender}
-                          onChange={e => setApproveSpender(e.target.value)}
-                          placeholder={t('program.spender')}
-                          className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-emerald-500 font-mono"
-                        />
-                        <input
-                          value={approveAmount}
-                          onChange={e => setApproveAmount(e.target.value)}
-                          placeholder={t('program.amount')}
-                          className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setActivePanel(null)}
-                          className="px-4 py-2 rounded-xl text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all"
-                        >
-                          {t('common.cancel')}
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={actionBusy || !approveSpender.trim() || !approveAmount.trim()}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
-                        >
-                          {actionBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                          {actionBusy ? t('program.approving') : t('program.approve')}
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                  {/* Inline panel: Revoke */}
-                  {panel === 'revoke' && (
-                    <form
-                      onSubmit={e => handleRevoke(e, contract)}
-                      className="border-t border-outline-variant/10 bg-surface-container px-4 py-4 space-y-3"
-                    >
-                      <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">{t('program.revoke')}</p>
-                      <input
-                        value={revokeSpender}
-                        onChange={e => setRevokeSpender(e.target.value)}
-                        placeholder={t('program.spender')}
-                        className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-amber-500 font-mono"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setActivePanel(null)}
-                          className="px-4 py-2 rounded-xl text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all"
-                        >
-                          {t('common.cancel')}
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={actionBusy || !revokeSpender.trim()}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
-                        >
-                          {actionBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                          {actionBusy ? t('program.revoking') : t('program.revoke')}
-                        </button>
-                      </div>
-                    </form>
-                  )}
 
                   {/* Inline panel: Edit */}
                   {panel === 'edit' && (
