@@ -72,6 +72,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   const [copied, setCopied] = useState(false);
 
   const [generating, setGenerating] = useState(false);
+  const [keyLabel, setKeyLabel] = useState('');
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [dangerLoading, setDangerLoading] = useState(false);
 
@@ -134,7 +135,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
 
       const res = await api<{ api_key?: string; keys?: APIKey[] }>(
         '/api/auth/apikey/generate',
-        { method: 'POST', body: JSON.stringify(passkeyBody) },
+        { method: 'POST', body: JSON.stringify({ ...passkeyBody, label: keyLabel.trim() || undefined }) },
       );
 
       if (!res.success) {
@@ -150,6 +151,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         await loadKeys();
       }
 
+      setKeyLabel('');
       toast(t('settings.generateSuccess'), 'success', 8000);
     } finally {
       setGenerating(false);
@@ -397,19 +399,26 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
 
         {/* API Management Section */}
         <section className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-headline font-semibold text-on-surface">{t('settings.apiKeys')}</h2>
-              <p className="text-sm text-slate-500">
-                {t('settings.apiKeysDesc')}
-              </p>
-            </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-on-surface">{t('settings.apiKeys')}</h2>
+            <p className="text-xs text-on-surface-variant">{t('settings.apiKeysDesc')}</p>
+          </div>
+
+          {/* Generate new key with optional label */}
+          <div className="flex items-center gap-2">
+            <input
+              value={keyLabel}
+              onChange={e => setKeyLabel(e.target.value)}
+              placeholder={t('settings.keyLabelPlaceholder')}
+              className="flex-1 bg-surface-container border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface placeholder:text-outline outline-none focus:border-primary transition-colors"
+              disabled={generating}
+            />
             <button
               onClick={handleGenerateKey}
               disabled={generating}
-              className="group flex items-center gap-2 px-6 py-3 primary-gradient rounded-xl text-on-primary-container font-semibold glow-primary hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
-              <Fingerprint className="w-5 h-5" />
+              <Fingerprint className="w-4 h-4" />
               {generating ? t('settings.verifying') : t('settings.generateKey')}
             </button>
           </div>
@@ -463,7 +472,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                       </button>
                     </div>
                     <h3 className="font-semibold text-on-surface mb-1 truncate">
-                      {key.prefix}
+                      {key.label || key.prefix}
                     </h3>
                     <code className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
                       {maskKey(key.prefix)}

@@ -112,6 +112,9 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   // Public key state
   const [pubkey, setPubkey] = useState<string | null>(null);
 
+  // USD price
+  const [usdPrice, setUsdPrice] = useState<number | null>(null);
+
   const wallet = wallets.find(w => w.id === walletId);
   const family = wallet ? getChainFamily(wallet.chain) : 'evm';
   const isSolana = family === 'solana';
@@ -126,6 +129,17 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       if (res.success) setDailySpent(res);
     });
   }, [walletId]);
+
+  // Fetch USD price
+  useEffect(() => {
+    if (!currency) return;
+    api<{ success: boolean; prices?: Record<string, number> }>('/api/prices').then(res => {
+      if (res.success && res.prices) {
+        const sym = currency.toUpperCase();
+        if (res.prices[sym]) setUsdPrice(res.prices[sym]);
+      }
+    });
+  }, [currency]);
 
   // Fetch public key on mount
   useEffect(() => {
@@ -336,7 +350,11 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
               <div>
                 <p className="text-xs text-outline uppercase tracking-widest font-label mb-1">{t('wallet.balance')}</p>
                 <p className="font-headline font-black text-2xl text-on-surface tracking-tighter">{balance ?? '—'}</p>
-                <p className="text-xs text-secondary font-bold uppercase tracking-widest">{currency}</p>
+                {usdPrice !== null && balance && (
+                  <p className="text-xs text-on-surface-variant tabular-nums">
+                    ≈ ${(parseFloat(balance.split(' ')[0]) * usdPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
+                  </p>
+                )}
               </div>
               <button onClick={handleRefresh} disabled={refreshing} title={t('wallets.refreshBalance')} className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />

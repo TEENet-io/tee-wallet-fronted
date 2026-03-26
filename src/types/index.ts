@@ -86,8 +86,9 @@ export interface AuditLog {
 export interface APIKey {
   id: string;
   prefix: string;
+  label?: string;
   created_at: string;
-  status: 'active' | 'revoked';
+  status?: 'active' | 'revoked';
 }
 
 export interface ApiResponse<T = unknown> {
