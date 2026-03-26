@@ -92,51 +92,73 @@ interface LogRowProps {
 }
 
 function DetailBlock({ details }: { details: string }) {
+  const [expanded, setExpanded] = useState(false);
   try {
     const obj = JSON.parse(details);
     const entries = Object.entries(obj);
-    if (entries.length === 0) return <p className="text-sm text-on-surface-variant">{details}</p>;
+    if (entries.length === 0) return null;
+    // Show first entry as summary, rest on expand
+    const summary = `${entries[0][0]}: ${String(entries[0][1])}`;
+    if (entries.length === 1) {
+      return <p className="text-xs text-on-surface-variant font-mono truncate">{summary}</p>;
+    }
     return (
-      <div className="space-y-0.5">
-        {entries.map(([k, v]) => (
-          <p key={k} className="text-sm leading-snug">
-            <span className="text-on-surface-variant">{k}: </span>
-            <span className="text-on-surface font-mono text-xs break-all">{String(v)}</span>
-          </p>
-        ))}
+      <div>
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="text-xs text-on-surface-variant hover:text-on-surface transition-colors text-left w-full"
+        >
+          <span className="font-mono truncate block">{summary}</span>
+          <span className="text-[10px] text-primary">{expanded ? '- less' : `+ ${entries.length - 1} more`}</span>
+        </button>
+        {expanded && (
+          <div className="mt-1 space-y-0.5 pl-2 border-l border-outline-variant/20">
+            {entries.slice(1).map(([k, v]) => (
+              <p key={k} className="text-xs leading-snug">
+                <span className="text-on-surface-variant">{k}: </span>
+                <span className="text-on-surface font-mono break-all">{String(v)}</span>
+              </p>
+            ))}
+          </div>
+        )}
       </div>
     );
   } catch {
-    return <p className="text-sm text-on-surface leading-snug break-words">{details}</p>;
+    return <p className="text-xs text-on-surface-variant font-mono truncate">{details}</p>;
   }
 }
 
 function LogRow({ log, getLabel }: LogRowProps) {
   return (
-    <div className="px-4 py-3 hover:bg-surface-container-high/50 transition-colors rounded-lg">
-      {/* Top row: badge + time + status */}
-      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+    <div className="px-3 py-2.5 hover:bg-surface-container-high/50 transition-colors rounded-lg">
+      {/* Row 1: badge + status + time */}
+      <div className="flex items-center gap-1.5 flex-wrap">
         <ActionBadge action={log.action} getLabel={getLabel} />
-        {log.auth_mode && (
-          <span className="text-[10px] text-outline font-mono px-1.5 py-0.5 bg-surface-container-high rounded">{log.auth_mode}</span>
-        )}
         {log.status && (
           <span className={`text-[10px] font-bold uppercase ${log.status === 'success' ? 'text-green-400' : 'text-error'}`}>{log.status}</span>
         )}
-        <span className="ml-auto text-[11px] text-on-surface-variant tabular-nums">
+        <span className="ml-auto text-[10px] text-on-surface-variant tabular-nums whitespace-nowrap">
           {new Date(log.created_at).toLocaleString(undefined, {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
           })}
         </span>
       </div>
-      {/* Detail row */}
+      {/* Row 2: details (collapsible) */}
       {log.details && (
-        <div className="ml-0.5">
+        <div className="mt-1">
           <DetailBlock details={log.details} />
         </div>
       )}
-      {log.ip && (
-        <p className="text-[10px] text-outline font-mono mt-1">{log.ip}</p>
+      {/* Row 3: meta (hidden on mobile unless relevant) */}
+      {(log.auth_mode || log.ip) && (
+        <div className="flex items-center gap-2 mt-1 hidden sm:flex">
+          {log.auth_mode && (
+            <span className="text-[10px] text-outline font-mono">{log.auth_mode}</span>
+          )}
+          {log.ip && (
+            <span className="text-[10px] text-outline font-mono">{log.ip}</span>
+          )}
+        </div>
       )}
     </div>
   );

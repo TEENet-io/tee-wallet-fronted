@@ -105,23 +105,10 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
     <div className="animate-in fade-in duration-500 space-y-10">
       <ConfirmDialog />
 
-      {/* Hero Section */}
-      <section className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-            <span className="text-secondary text-xs font-bold tracking-[0.2em] uppercase font-label">
-              {t('wallets.teeProtected')}
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-on-surface">
-            {t('wallets.title')}
-          </h1>
-          <p className="text-slate-400 max-w-2xl text-lg">
-            {t('wallets.subtitle')}
-          </p>
-        </div>
-      </section>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-on-surface">{t('wallets.title')}</h1>
+      </div>
 
       {/* Create Wallet Card */}
       <section>
@@ -130,10 +117,10 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
           className="w-full flex items-center justify-between px-6 py-4 bg-surface-container-low rounded-2xl ghost-border hover:bg-surface-container transition-all duration-200 group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl primary-gradient flex items-center justify-center shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-              <Plus className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Plus className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-headline font-bold text-on-surface">{t('wallets.createNew')}</span>
+            <span className="text-sm font-medium text-on-surface">{t('wallets.createNew')}</span>
           </div>
           {createOpen
             ? <ChevronUp className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />

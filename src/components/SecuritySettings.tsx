@@ -368,17 +368,10 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       <ConfirmDialog />
 
       <div className="animate-in fade-in duration-500 space-y-12">
-        {/* Hero Section */}
-        <section className="gap-6">
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-on-surface">
-              {t('settings.title')}
-            </h1>
-            <p className="text-slate-400 text-lg max-w-2xl">
-              {t('settings.subtitle')}
-            </p>
-          </div>
-        </section>
+        {/* Header */}
+        <div>
+          <h1 className="text-xl font-semibold text-on-surface">{t('settings.title')}</h1>
+        </div>
 
         {/* One-time new key banner */}
         {newKey && (
@@ -850,12 +843,6 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
           </div>
         </section>
 
-        {/* Aesthetic Data Scan Decorative */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent relative mt-12">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-surface text-[10px] text-slate-600 uppercase tracking-[0.4em] font-bold">
-            {t('settings.endStream')}
-          </div>
-        </div>
       </div>
     </>
   );
