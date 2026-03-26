@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, AlertTriangle, Pencil, X } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useToast } from '../contexts/ToastContext';
 import { api } from '../lib/api';
 import type { DailySpent } from '../types';
 import PolicyPanel from '../components/wallet/PolicyPanel';
@@ -94,11 +95,22 @@ interface WalletDetailProps {
 export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const { wallets, balances, refreshBalance, getChainFamily, getChainCurrency, chainsMap, loading } = useWallets();
   const { t } = useLanguage();
+  const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabId>('policy');
   const [copied, setCopied] = useState(false);
+  const [pubkeyCopied, setPubkeyCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [dailySpent, setDailySpent] = useState<DailySpent | null>(null);
+
+  // Rename state
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameSaving, setRenameSaving] = useState(false);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // Public key state
+  const [pubkey, setPubkey] = useState<string | null>(null);
 
   const wallet = wallets.find(w => w.id === walletId);
   const family = wallet ? getChainFamily(wallet.chain) : 'evm';
@@ -115,11 +127,34 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
     });
   }, [walletId]);
 
+  // Fetch public key on mount
+  useEffect(() => {
+    if (!walletId) return;
+    api<{ success: boolean; pubkey?: string }>(`/api/wallets/${walletId}/pubkey`).then(res => {
+      if (res.success && res.pubkey) setPubkey(res.pubkey);
+    });
+  }, [walletId]);
+
+  // Focus rename input when entering rename mode
+  useEffect(() => {
+    if (isRenaming) {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    }
+  }, [isRenaming]);
+
   async function handleCopy() {
     if (!wallet?.address) return;
     await navigator.clipboard.writeText(wallet.address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleCopyPubkey() {
+    if (!pubkey) return;
+    await navigator.clipboard.writeText(pubkey);
+    setPubkeyCopied(true);
+    setTimeout(() => setPubkeyCopied(false), 2000);
   }
 
   async function handleRefresh() {
@@ -129,6 +164,54 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       await refreshBalance(wallet.id);
     } finally {
       setRefreshing(false);
+    }
+  }
+
+  function startRename() {
+    if (!wallet) return;
+    setRenameValue(wallet.label);
+    setIsRenaming(true);
+  }
+
+  function cancelRename() {
+    setIsRenaming(false);
+    setRenameValue('');
+  }
+
+  async function commitRename() {
+    if (!wallet || renameSaving) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed || trimmed === wallet.label) {
+      cancelRename();
+      return;
+    }
+    setRenameSaving(true);
+    try {
+      const res = await api(`/api/wallets/${walletId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ label: trimmed }),
+      });
+      if (res.success) {
+        toast(t('wallet.renameSuccess'), 'success');
+        // Refresh wallets list so the label updates in context
+        // The wallet context will re-fetch on next load; trigger a balance refresh to stay responsive
+        await refreshBalance(wallet.id);
+      } else {
+        toast((res as { error?: string }).error ?? 'Rename failed', 'error');
+      }
+    } finally {
+      setRenameSaving(false);
+      setIsRenaming(false);
+      setRenameValue('');
+    }
+  }
+
+  function handleRenameKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitRename();
+    } else if (e.key === 'Escape') {
+      cancelRename();
     }
   }
 
@@ -184,12 +267,47 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
 
           <div className="flex-1 min-w-0 space-y-3">
             <div>
+              {/* Label row with rename */}
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="font-headline font-bold text-2xl md:text-3xl text-on-surface tracking-tight">{wallet.label}</h1>
+                {isRenaming ? (
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <input
+                      ref={renameInputRef}
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={handleRenameKeyDown}
+                      disabled={renameSaving}
+                      className="font-headline font-bold text-2xl md:text-3xl text-on-surface tracking-tight bg-transparent border-b-2 border-primary outline-none min-w-0 flex-1 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={e => { e.preventDefault(); cancelRename(); }}
+                      className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all"
+                      title="Cancel"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="font-headline font-bold text-2xl md:text-3xl text-on-surface tracking-tight">{wallet.label}</h1>
+                    <button
+                      type="button"
+                      onClick={startRename}
+                      title={t('wallet.rename')}
+                      className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all ghost-border"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
                 <StatusDot status={wallet.status} />
               </div>
               <p className="text-secondary text-sm font-medium mt-1">{chainLabel}</p>
             </div>
+
+            {/* Address row */}
             <div className="flex items-center gap-2 flex-wrap">
               <code className="text-xs text-on-surface-variant font-mono bg-surface-container-high px-3 py-1.5 rounded-lg ghost-border break-all">
                 {wallet.address}
@@ -198,6 +316,19 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
+
+            {/* Public key row */}
+            {pubkey && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-on-surface-variant font-medium shrink-0">{t('wallet.pubkey')}:</span>
+                <code className="text-xs text-on-surface-variant font-mono bg-surface-container-high px-3 py-1.5 rounded-lg ghost-border break-all">
+                  {pubkey}
+                </code>
+                <button onClick={handleCopyPubkey} title={t('wallet.pubkey')} className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
+                  {pubkeyCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            )}
           </div>
 
           {wallet.status === 'ready' && (

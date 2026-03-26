@@ -9,6 +9,7 @@ interface WalletContextValue {
   chainsMap: Record<string, ChainConfig>;
   balances: Record<string, string>;
   loading: boolean;
+  loadChains: () => Promise<void>;
   loadWallets: () => Promise<void>;
   createWallet: (chain: string, label: string) => Promise<Wallet | null>;
   deleteWallet: (id: string) => Promise<boolean>;
@@ -106,7 +107,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return (
     <WalletContext.Provider value={{
       wallets, chainsMap, balances, loading,
-      loadWallets, createWallet, deleteWallet, refreshBalance,
+      loadChains, loadWallets, createWallet, deleteWallet, refreshBalance,
       getChainFamily, getChainCurrency,
     }}>
       {children}
