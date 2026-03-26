@@ -179,9 +179,9 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
                 />
                 <div className="flex justify-between text-[10px] text-outline mt-1 select-none">
                   <span>{t('policy.off')}</span>
-                  <span>$100</span>
-                  <span>$1,000</span>
+                  <span>$2,500</span>
                   <span>$5,000</span>
+                  <span>$7,500</span>
                   <span>$10,000</span>
                 </div>
               </div>
