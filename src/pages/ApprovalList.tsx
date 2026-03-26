@@ -4,7 +4,6 @@ import { api } from '../lib/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { Approval } from '../types';
 
-type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'expired';
 
 function getTimeRemaining(expiresAt?: string): string | null {
   if (!expiresAt) return null;
@@ -178,15 +177,6 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<StatusFilter>('all');
-
-  const STATUS_FILTERS: { value: StatusFilter; labelKey: string }[] = [
-    { value: 'all', labelKey: 'approvals.all' },
-    { value: 'pending', labelKey: 'approvals.pending' },
-    { value: 'approved', labelKey: 'approvals.approved' },
-    { value: 'rejected', labelKey: 'approvals.rejected' },
-    { value: 'expired', labelKey: 'approvals.expired' },
-  ];
 
   const fetchApprovals = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -208,54 +198,26 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
     fetchApprovals();
   }, [fetchApprovals]);
 
-  const filtered = filter === 'all'
-    ? approvals
-    : approvals.filter(a => a.status === filter);
-
-  const pendingCount = approvals.filter(a => a.status === 'pending').length;
-
   return (
-    <div className="animate-in fade-in duration-500">
-      {/* Page Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <ShieldCheck className="w-6 h-6 text-primary" />
-            <h1 className="text-3xl font-headline font-bold text-on-surface tracking-tight">{t('approvals.title')}</h1>
-            {pendingCount > 0 && (
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-secondary/20 border border-secondary/40 text-secondary text-xs font-black shadow-[0_0_8px_rgba(93,230,255,0.2)]">
-                {pendingCount}
-              </span>
-            )}
-          </div>
-          <p className="text-on-surface-variant text-sm">{t('approvals.subtitle')}</p>
+    <div className="animate-in fade-in duration-500 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-on-surface">{t('approvals.title')}</h1>
+          {approvals.length > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary/15 text-primary text-xs font-bold">
+              {approvals.length}
+            </span>
+          )}
         </div>
-
         <button
           onClick={() => fetchApprovals(true)}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-high ghost-border text-on-surface-variant hover:text-on-surface hover:border-outline/40 transition-all duration-200 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
           {t('approvals.refresh')}
         </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-container-low ghost-border mb-6 w-fit">
-        {STATUS_FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={value}
-            onClick={() => setFilter(value)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-              filter === value
-                ? 'bg-surface-container-high text-on-surface shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            {t(labelKey)}
-          </button>
-        ))}
       </div>
 
       {/* Content */}
@@ -285,23 +247,15 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
             {t('approval.tryAgain')}
           </button>
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-surface-container-high ghost-border flex items-center justify-center mb-4">
-            <Inbox className="w-8 h-8 text-slate-500" />
-          </div>
-          <p className="text-on-surface font-semibold mb-1">
-            {filter === 'all' ? t('approvals.empty') : `${t('approvals.noStatus')} ${t(`approvals.${filter}`)}`}
-          </p>
-          <p className="text-on-surface-variant text-sm">
-            {filter === 'all'
-              ? t('approvals.emptyDesc')
-              : t('approvals.noStatusDesc')}
-          </p>
+      ) : approvals.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Inbox className="w-8 h-8 text-outline mb-3" />
+          <p className="text-on-surface font-medium text-sm mb-1">{t('approvals.empty')}</p>
+          <p className="text-on-surface-variant text-xs">{t('approvals.emptyDesc')}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map(approval => (
+        <div className="space-y-2">
+          {approvals.map(approval => (
             <ApprovalCard
               key={approval.id}
               approval={approval}
