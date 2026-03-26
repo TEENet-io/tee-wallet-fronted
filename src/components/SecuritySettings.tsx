@@ -3,7 +3,7 @@ import {
   Terminal, Bot, KeyRound, Radio, Ban,
   LogOut, Trash2, Fingerprint, Copy, Check,
   Link2, ChevronDown, ChevronUp, Plus, X,
-  UserPlus,
+  UserPlus, Pencil,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -75,6 +75,10 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   const [keyLabel, setKeyLabel] = useState('');
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [dangerLoading, setDangerLoading] = useState(false);
+
+  // Rename state
+  const [renamingPrefix, setRenamingPrefix] = useState<string | null>(null);
+  const [renameLabel, setRenameLabel] = useState('');
 
   // ---------------------------------------------------------------------------
   // Chain Manager state
@@ -193,6 +197,31 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
     } finally {
       setRevokingId(null);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rename API key
+  // ---------------------------------------------------------------------------
+  function startRename(key: APIKey) {
+    setRenamingPrefix(key.prefix);
+    setRenameLabel(key.label || '');
+  }
+
+  async function commitRename(prefix: string) {
+    const trimmed = renameLabel.trim();
+    if (!trimmed) { setRenamingPrefix(null); return; }
+
+    const res = await api('/api/auth/apikey', {
+      method: 'PATCH',
+      body: JSON.stringify({ prefix, label: trimmed }),
+    });
+    if (res.success) {
+      toast(t('settings.renameSuccess'), 'success');
+      await loadKeys();
+    } else {
+      toast((res as { error?: string }).error || 'Rename failed', 'error');
+    }
+    setRenamingPrefix(null);
   }
 
   // ---------------------------------------------------------------------------
@@ -471,9 +500,35 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                         <Ban className="w-5 h-5" />
                       </button>
                     </div>
-                    <h3 className="font-semibold text-on-surface mb-1 truncate">
-                      {key.label || key.prefix}
-                    </h3>
+                    {renamingPrefix === key.prefix ? (
+                      <div className="mb-2">
+                        <input
+                          autoFocus
+                          value={renameLabel}
+                          onChange={e => setRenameLabel(e.target.value)}
+                          onBlur={() => commitRename(key.prefix)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') commitRename(key.prefix);
+                            if (e.key === 'Escape') setRenamingPrefix(null);
+                          }}
+                          className="w-full bg-transparent border-b border-primary text-on-surface text-sm font-semibold outline-none py-0.5"
+                          placeholder="Label"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <h3 className="font-semibold text-on-surface truncate">
+                          {key.label || key.prefix}
+                        </h3>
+                        <button
+                          onClick={() => startRename(key)}
+                          className="shrink-0 w-5 h-5 flex items-center justify-center text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                          title={t('settings.rename')}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                     <code className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
                       {maskKey(key.prefix)}
                     </code>

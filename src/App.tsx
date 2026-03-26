@@ -71,7 +71,7 @@ export default function App() {
       <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-14 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/10">
         <div className="flex items-center gap-2.5">
           <Shield className="w-5 h-5 text-primary" />
-          <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">OpenClaw</span>
+          <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">TWallet</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="hidden md:flex gap-1 items-center mr-2">

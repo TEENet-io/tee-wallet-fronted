@@ -237,7 +237,7 @@ export default function AuditHistory() {
 
                         {/* Expanded details */}
                         {isExpanded && fullDetails.length > 0 && (
-                          <div className="mt-2 space-y-1 bg-surface-container rounded-lg p-3">
+                          <div className="mt-2 space-y-1 bg-surface-container rounded-lg p-3 overflow-hidden">
                             {fullDetails.map(([k, v]) => (
                               <div key={k} className="flex gap-2 text-xs">
                                 <span className="text-on-surface-variant shrink-0 w-24 text-right">{k}</span>
@@ -253,7 +253,7 @@ export default function AuditHistory() {
                             {log.ip && (
                               <div className="flex gap-2 text-xs">
                                 <span className="text-on-surface-variant shrink-0 w-24 text-right">ip</span>
-                                <span className="text-on-surface font-mono">{log.ip}</span>
+                                <span className="text-on-surface font-mono break-all">{log.ip}</span>
                               </div>
                             )}
                           </div>
