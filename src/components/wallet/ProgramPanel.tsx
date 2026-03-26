@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { FileCode2, Plus, Trash2, Loader2, CheckSquare, Square, ExternalLink } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../ConfirmDialog';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -47,6 +48,7 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useLanguage();
+  const { getFreshPasskeyCredential } = useAuth();
 
   const [contracts, setContracts] = useState<AllowedContract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,12 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
 
     setRemoving(contract.id);
     try {
-      const res = await api(`/api/wallets/${walletId}/contracts/${contract.id}`, { method: 'DELETE' });
+      const passkeyBody = await getFreshPasskeyCredential();
+      if (!passkeyBody) { setRemoving(null); return; }
+      const res = await api(`/api/wallets/${walletId}/contracts/${contract.id}`, {
+        method: 'DELETE',
+        body: JSON.stringify(passkeyBody),
+      });
       if (res.success) {
         toast(t('program.removeSuccess'), 'success');
         await loadContracts();
@@ -113,9 +120,11 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
   async function handleAddDefault(program: typeof EVM_PROGRAMS[number]) {
     setAdding(true);
     try {
+      const passkeyBody = await getFreshPasskeyCredential();
+      if (!passkeyBody) { setAdding(false); return; }
       const res = await api(`/api/wallets/${walletId}/contracts`, {
         method: 'POST',
-        body: JSON.stringify({ contract_address: program.address, label: program.label, symbol: program.abi_hint }),
+        body: JSON.stringify({ ...passkeyBody, contract_address: program.address, label: program.label, symbol: program.abi_hint }),
       });
       if (res.success) {
         toast(`${program.label} ${t('program.addedSuffix')}`, 'success');
@@ -134,9 +143,12 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
 
     setAdding(true);
     try {
+      const passkeyBody = await getFreshPasskeyCredential();
+      if (!passkeyBody) { setAdding(false); return; }
       const res = await api(`/api/wallets/${walletId}/contracts`, {
         method: 'POST',
         body: JSON.stringify({
+          ...passkeyBody,
           contract_address: newAddress.trim(),
           label: newLabel.trim() || t('program.customContract'),
           symbol: newAbiHint.trim() || undefined,
