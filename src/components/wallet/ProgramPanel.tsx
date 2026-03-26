@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
-import { FileCode2, Plus, Trash2, Loader2, CheckSquare, Square, ExternalLink } from 'lucide-react';
+import { FileCode2, Plus, Trash2, Loader2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -52,7 +52,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
 
   const [contracts, setContracts] = useState<AllowedContract[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [removing, setRemoving] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -68,8 +67,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
       const res = await api<{ contracts?: AllowedContract[] }>(`/api/wallets/${walletId}/contracts`);
       if (res.success && Array.isArray(res.contracts)) {
         setContracts(res.contracts);
-        // Auto-select all on load
-        setSelected(new Set(res.contracts.map(c => c.id)));
       }
     } finally {
       setLoading(false);
@@ -77,15 +74,6 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
   }, [walletId]);
 
   useEffect(() => { loadContracts(); }, [loadContracts]);
-
-  function toggleSelect(id: string) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   async function handleRemove(contract: AllowedContract) {
     const ok = await confirm({
@@ -279,27 +267,13 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
         ) : (
           <div className="space-y-2">
             {contracts.map(contract => {
-              const isSelected = selected.has(contract.id);
               const isRemoving = removing === contract.id;
 
               return (
                 <div
                   key={contract.id}
-                  className={`bg-surface-container-low rounded-2xl p-5 ghost-border flex items-center gap-4 group transition-all hover:bg-surface-container ${
-                    isSelected ? 'border-primary/30' : ''
-                  }`}
+                  className="bg-surface-container-low rounded-2xl p-4 ghost-border flex items-center gap-4 group transition-all hover:bg-surface-container"
                 >
-                  {/* Select checkbox */}
-                  <button
-                    onClick={() => toggleSelect(contract.id)}
-                    className="flex-shrink-0 text-on-surface-variant hover:text-primary transition-colors"
-                  >
-                    {isSelected
-                      ? <CheckSquare className="w-5 h-5 text-primary" />
-                      : <Square className="w-5 h-5" />
-                    }
-                  </button>
-
                   {/* Icon */}
                   <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center flex-shrink-0 ghost-border">
                     <FileCode2 className="w-5 h-5 text-primary" />
@@ -308,7 +282,7 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-bold text-on-surface">{contract.label || t('program.unnamed')}</p>
+                      <p className="font-medium text-on-surface text-sm">{contract.label || t('program.unnamed')}</p>
                       {contract.symbol && (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor(contract.symbol)}`}>
                           {contract.symbol}
@@ -318,20 +292,18 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
                     <p className="text-xs text-on-surface-variant font-mono mt-0.5">{truncateAddr(contract.contract_address)}</p>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleRemove(contract)}
-                      disabled={isRemoving}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all disabled:opacity-50"
-                      title={t('program.removeBtn')}
-                    >
-                      {isRemoving
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <Trash2 className="w-4 h-4" />
-                      }
-                    </button>
-                  </div>
+                  {/* Delete */}
+                  <button
+                    onClick={() => handleRemove(contract)}
+                    disabled={isRemoving}
+                    className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                    title={t('program.removeBtn')}
+                  >
+                    {isRemoving
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Trash2 className="w-4 h-4" />
+                    }
+                  </button>
                 </div>
               );
             })}
@@ -340,9 +312,8 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
 
         {/* Summary */}
         {contracts.length > 0 && (
-          <div className="flex items-center justify-between px-2 text-xs text-on-surface-variant">
-            <span>{selected.size} {t('program.of')} {contracts.length} {t('program.selected')}</span>
-            <span>{contracts.length} {contracts.length !== 1 ? t('program.programs') : t('program.program')} {t('program.whitelisted')}</span>
+          <div className="px-2 text-xs text-on-surface-variant">
+            {contracts.length} {contracts.length !== 1 ? t('program.programs') : t('program.program')} {t('program.whitelisted')}
           </div>
         )}
       </div>
