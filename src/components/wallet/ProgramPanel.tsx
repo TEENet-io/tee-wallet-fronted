@@ -99,7 +99,7 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
 
   async function handleRemove(contract: AllowedContract) {
     const ok = await confirm({
-      title: t('program.removeTitle'),
+      title: t(chainFamily === 'evm' ? 'program.removeTitle.evm' : 'program.removeTitle'),
       message: `${t('program.removeMessage')} "${contract.label || truncateAddr(contract.contract_address)}"?`,
       confirmText: t('program.removeBtn'),
       danger: true,
@@ -225,7 +225,7 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
           <div>
             <h2 className="text-xl font-headline font-bold text-on-surface flex items-center gap-2">
               <FileCode2 className="w-5 h-5 text-primary" />
-              {t('program.title')}
+              {t(chainFamily === 'evm' ? 'program.title.evm' : 'program.title')}
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
               {t('program.subtitle')}
@@ -316,7 +316,7 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
         ) : contracts.length === 0 ? (
           <div className="bg-surface-container-low rounded-2xl p-12 ghost-border flex flex-col items-center justify-center gap-3 text-center">
             <FileCode2 className="w-10 h-10 text-outline" />
-            <p className="text-on-surface-variant text-sm">{t('program.empty')}</p>
+            <p className="text-on-surface-variant text-sm">{t(chainFamily === 'evm' ? 'program.empty.evm' : 'program.empty')}</p>
             <p className="text-outline text-xs">{t('program.emptyDesc')}</p>
           </div>
         ) : (

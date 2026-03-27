@@ -173,6 +173,7 @@ const en: Record<string, string> = {
 
   // Program panel
   'program.title': 'Whitelisted Programs',
+  'program.title.evm': 'Whitelisted Contracts',
   'program.subtitle': 'Approved contracts and tokens your agent can interact with.',
   'program.newBtn': 'New',
   'program.addCustomTitle': 'Add Custom Contract',
@@ -182,9 +183,11 @@ const en: Record<string, string> = {
   'program.addBtn': 'Add',
   'program.quickAdd': 'Quick Add',
   'program.empty': 'No programs whitelisted yet.',
+  'program.empty.evm': 'No contracts whitelisted yet.',
   'program.emptyDesc': 'Add contracts above to define what your agent can interact with.',
   'program.unnamed': 'Unnamed',
   'program.removeTitle': 'Remove Program',
+  'program.removeTitle.evm': 'Remove Contract',
   'program.removeMessage': 'Remove',
   'program.removeBtn': 'Remove',
   'program.removeSuccess': 'Program removed',

@@ -56,7 +56,11 @@ export interface Approval {
   wallet_id: string;
   action: string;
   status: 'pending' | 'approved' | 'rejected' | 'expired';
+  approval_type?: string;
+  tx_context?: string;
+  policy_data?: string;
   amount?: string;
+  amount_usd?: string;
   currency?: string;
   to_address?: string;
   memo?: string;
@@ -70,6 +74,7 @@ export interface Approval {
   expires_at?: string;
   created_at: string;
   tx_hash?: string;
+  signature?: string;
 }
 
 export interface AuditLog {

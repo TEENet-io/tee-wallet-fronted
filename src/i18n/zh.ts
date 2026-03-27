@@ -173,6 +173,7 @@ const zh: Record<string, string> = {
 
   // Program panel
   'program.title': '白名单程序',
+  'program.title.evm': '白名单合约',
   'program.subtitle': '已授权代理可交互的合约和代币。',
   'program.newBtn': '新建',
   'program.addCustomTitle': '添加自定义合约',
@@ -182,9 +183,11 @@ const zh: Record<string, string> = {
   'program.addBtn': '添加',
   'program.quickAdd': '快速添加',
   'program.empty': '暂无白名单程序。',
+  'program.empty.evm': '暂无白名单合约。',
   'program.emptyDesc': '在上方添加合约以定义您的代理可与哪些合约交互。',
   'program.unnamed': '未命名',
   'program.removeTitle': '移除程序',
+  'program.removeTitle.evm': '移除合约',
   'program.removeMessage': '移除',
   'program.removeBtn': '移除',
   'program.removeSuccess': '程序已移除',
