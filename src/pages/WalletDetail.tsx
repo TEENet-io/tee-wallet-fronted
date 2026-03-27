@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
-import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, AlertTriangle, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, AlertTriangle, Pencil, X, Trash2 } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useToast } from '../contexts/ToastContext';
 import { api } from '../lib/api';
@@ -93,9 +94,11 @@ interface WalletDetailProps {
 }
 
 export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
-  const { wallets, balances, refreshBalance, getChainFamily, getChainCurrency, chainsMap, loading } = useWallets();
+  const { wallets, balances, refreshBalance, getChainFamily, getChainCurrency, chainsMap, loading, deleteWallet } = useWallets();
+  const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [deleting, setDeleting] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabId>('policy');
   const [copied, setCopied] = useState(false);
@@ -226,6 +229,23 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       commitRename();
     } else if (e.key === 'Escape') {
       cancelRename();
+    }
+  }
+
+  async function handleDelete() {
+    const ok = await confirm({
+      title: t('wallets.delete'),
+      message: `${t('wallets.deleteConfirmPrefix')} "${wallet?.label}". ${t('wallets.deleteConfirmSuffix')}`,
+      confirmText: t('wallets.deleteBtn'),
+      danger: true,
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      const success = await deleteWallet(walletId);
+      if (success) onBack();
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -391,7 +411,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           }`}
         >
           <FileCode2 className="w-4 h-4" />
-          {t('wallet.tab.program')}
+          {isSolana ? t('wallet.tab.program') : t('wallet.tab.contract')}
         </button>
       </div>
 
@@ -400,6 +420,26 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
         {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} />}
         {activeTab === 'program' && <ProgramPanel walletId={wallet.id} chainFamily={family} />}
       </div>
+
+      {/* Danger Zone */}
+      <div className="rounded-2xl ghost-border border-error/20 bg-error/5 p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-error">{t('wallets.deleteWallet')}</p>
+            <p className="text-xs text-on-surface-variant mt-0.5">{t('wallets.deleteConfirm')}</p>
+          </div>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-error/10 border border-error/30 text-error text-sm font-bold hover:bg-error/20 transition-all disabled:opacity-50 flex-shrink-0"
+          >
+            {deleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            {t('wallets.deleteBtn')}
+          </button>
+        </div>
+      </div>
+
+      <ConfirmDialog />
     </div>
   );
 }

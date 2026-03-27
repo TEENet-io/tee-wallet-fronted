@@ -1,8 +1,6 @@
 import { useState, type MouseEvent } from 'react';
-import { Plus, Wallet, ChevronRight, Trash2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Wallet, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ConfirmDialog';
 import { useLanguage } from '../contexts/LanguageContext';
 import ChainSelector from '../components/ChainSelector';
 
@@ -42,16 +40,13 @@ interface WalletListProps {
 }
 
 export default function WalletList({ onSelectWallet }: WalletListProps) {
-  const { wallets, chainsMap, balances, loading, createWallet, deleteWallet, refreshBalance, getChainFamily, getChainCurrency } = useWallets();
-  const { requireReauth } = useAuth();
-  const { confirm, ConfirmDialog } = useConfirm();
+  const { wallets, chainsMap, balances, loading, createWallet, refreshBalance, getChainFamily, getChainCurrency } = useWallets();
   const { t } = useLanguage();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedChain, setSelectedChain] = useState('');
   const [label, setLabel] = useState('');
   const [creating, setCreating] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   const firstChain = Object.keys(chainsMap)[0] ?? '';
@@ -72,25 +67,6 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
     }
   }
 
-  async function handleDelete(e: MouseEvent<HTMLButtonElement>, walletId: string, walletLabel: string) {
-    e.stopPropagation();
-    const authed = await requireReauth();
-    if (!authed) return;
-    const ok = await confirm({
-      title: t('wallets.delete'),
-      message: `${t('wallets.deleteConfirmPrefix')} "${walletLabel}". ${t('wallets.deleteConfirmSuffix')}`,
-      confirmText: t('wallets.deleteBtn'),
-      danger: true,
-    });
-    if (!ok) return;
-    setDeletingId(walletId);
-    try {
-      await deleteWallet(walletId);
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
   async function handleRefresh(e: MouseEvent<HTMLButtonElement>, walletId: string) {
     e.stopPropagation();
     setRefreshingId(walletId);
@@ -103,8 +79,6 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
 
   return (
     <div className="animate-in fade-in duration-500 space-y-10">
-      <ConfirmDialog />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-on-surface">{t('wallets.title')}</h1>
@@ -230,7 +204,6 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
             const currency = getChainCurrency(wallet.chain);
             const chainLabel = chainsMap[wallet.chain]?.label ?? wallet.chain;
             const balance = balances[wallet.id];
-            const isDeleting = deletingId === wallet.id;
             const isRefreshing = refreshingId === wallet.id;
 
             return (
@@ -289,18 +262,6 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                         <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                       </button>
                     )}
-
-                    <button
-                      onClick={e => handleDelete(e, wallet.id, wallet.label)}
-                      disabled={isDeleting}
-                      title={t('wallets.deleteWallet')}
-                      className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                    >
-                      {isDeleting
-                        ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        : <Trash2 className="w-3.5 h-3.5" />
-                      }
-                    </button>
 
                     <ChevronRight className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>

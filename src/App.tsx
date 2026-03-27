@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Shield, Wallet, ShieldCheck, Activity, Settings, Sun, Moon, Languages } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -20,23 +20,50 @@ type View =
   | { page: 'settings' }
   | { page: 'history' };
 
+function viewFromHash(): View | null {
+  const match = window.location.hash.match(/^#\/approve\/(.+)$/);
+  if (match) return { page: 'approval-detail', approvalId: match[1] };
+  return null;
+}
+
 export default function App() {
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useLanguage();
-  const [view, setView] = useState<View>({ page: 'wallets' });
+  const [view, setView] = useState<View>(() => viewFromHash() || { page: 'wallets' });
+
+  // Listen for hash changes (e.g. back/forward)
+  useEffect(() => {
+    const onHashChange = () => {
+      const v = viewFromHash();
+      if (v) setView(v);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Sync hash when navigating
+  const setViewWithHash = useCallback((v: View) => {
+    if (v.page === 'approval-detail') {
+      window.location.hash = `#/approve/${v.approvalId}`;
+    } else if (window.location.hash.startsWith('#/approve/')) {
+      // Clear approval hash when navigating away
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    setView(v);
+  }, []);
 
   if (!isAuthenticated) {
-    return <Onboarding onLoginSuccess={() => setView({ page: 'wallets' })} />;
+    return <Onboarding onLoginSuccess={() => setView(viewFromHash() || { page: 'wallets' })} />;
   }
 
   const nav = {
-    wallets: () => setView({ page: 'wallets' }),
-    walletDetail: (id: string) => setView({ page: 'wallet-detail', walletId: id }),
-    approvals: () => setView({ page: 'approvals' }),
-    approvalDetail: (id: string) => setView({ page: 'approval-detail', approvalId: id }),
-    settings: () => setView({ page: 'settings' }),
-    history: () => setView({ page: 'history' }),
+    wallets: () => setViewWithHash({ page: 'wallets' }),
+    walletDetail: (id: string) => setViewWithHash({ page: 'wallet-detail', walletId: id }),
+    approvals: () => setViewWithHash({ page: 'approvals' }),
+    approvalDetail: (id: string) => setViewWithHash({ page: 'approval-detail', approvalId: id }),
+    settings: () => setViewWithHash({ page: 'settings' }),
+    history: () => setViewWithHash({ page: 'history' }),
   };
 
   const currentPage = view.page;

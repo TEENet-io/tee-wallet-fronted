@@ -277,8 +277,8 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             </div>
             <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
               {approval.amount
-                ? `${approval.action.replace(/_/g, ' ')} ${Number(approval.amount).toLocaleString()}${approval.currency ? ` ${approval.currency}` : ''}`
-                : approval.action.replace(/_/g, ' ')}
+                ? `${(approval.action ?? '').replace(/_/g, ' ')} ${Number(approval.amount).toLocaleString()}${approval.currency ? ` ${approval.currency}` : ''}`
+                : (approval.action ?? '').replace(/_/g, ' ')}
             </h1>
             {(approval.agent_intent || approval.memo) && (
               <p className="text-sm text-on-surface-variant">{approval.agent_intent || approval.memo}</p>
@@ -338,7 +338,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
               <Info className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
               <div>
                 <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.action')}</p>
-                <p className="text-sm text-on-surface capitalize">{approval.action.replace(/_/g, ' ')}</p>
+                <p className="text-sm text-on-surface capitalize">{(approval.action ?? '').replace(/_/g, ' ')}</p>
                 {approval.memo && <p className="text-xs text-on-surface-variant mt-1">{approval.memo}</p>}
               </div>
             </div>

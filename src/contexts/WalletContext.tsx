@@ -77,8 +77,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return null;
   }, [toast, loadWallets]);
 
+  const { getFreshPasskeyCredential } = useAuth();
+
   const deleteWallet = useCallback(async (id: string): Promise<boolean> => {
-    const res = await api(`/api/wallets/${id}`, { method: 'DELETE' });
+    const passkeyBody = await getFreshPasskeyCredential();
+    if (!passkeyBody) return false;
+    const res = await api(`/api/wallets/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify(passkeyBody),
+    });
     if (res.success) {
       toast('Wallet deleted', 'success');
       await loadWallets();
@@ -86,7 +93,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
     toast(res.error || 'Delete failed', 'error');
     return false;
-  }, [toast, loadWallets]);
+  }, [toast, loadWallets, getFreshPasskeyCredential]);
 
   const getChainFamily = useCallback((chain: string): 'evm' | 'solana' => {
     const cfg = chainsMap[chain];

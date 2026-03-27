@@ -119,7 +119,7 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
             </div>
 
             <p className="font-headline font-bold text-on-surface text-lg leading-tight mb-1 truncate capitalize">
-              {approval.action.replace(/_/g, ' ')}
+              {(approval.action ?? '').replace(/_/g, ' ')}
             </p>
 
             {(approval.amount || approval.currency) && (
