@@ -36,53 +36,118 @@ function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
   );
 }
 
-function DailySpendBanner({ spent }: { spent: DailySpent }) {
+function DailySpendGauge({ spent }: { spent: DailySpent }) {
   const { t } = useLanguage();
   const spentNum = parseFloat(spent.daily_spent_usd) || 0;
   const limitNum = parseFloat(spent.daily_limit_usd) || 0;
   const remainNum = parseFloat(spent.remaining_usd) || 0;
-  const pct = limitNum > 0 ? Math.min(1, spentNum / limitNum) : 0;
-  const isHigh = pct >= 0.8;
-  const isExceeded = pct >= 1;
+  const hasLimit = limitNum > 0;
+  const pct = hasLimit ? Math.min(1, spentNum / limitNum) : 0;
+  const isHigh = hasLimit && pct >= 0.8;
+  const isExceeded = hasLimit && pct >= 1;
 
   const resetTime = spent.reset_at
     ? new Date(spent.reset_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     : '';
 
+  // SVG arc gauge: 180 degrees (half circle)
+  const R = 54;
+  const STROKE = 8;
+  const cx = 64;
+  const cy = 60;
+  // Arc from 180deg to 0deg (left to right, half circle)
+  const arcLen = Math.PI * R; // half circumference
+  const filled = hasLimit ? arcLen * pct : 0;
+  const arcColor = isExceeded ? '#f87171' : isHigh ? '#fb923c' : '#7c3aed';
+  const glowColor = isExceeded ? 'rgba(248,113,113,0.5)' : isHigh ? 'rgba(251,146,60,0.4)' : 'rgba(124,58,237,0.35)';
+
   return (
-    <div className={`rounded-2xl p-4 ghost-border flex flex-col sm:flex-row sm:items-center gap-4 ${
-      isExceeded ? 'bg-error/10 border-error/20' : isHigh ? 'bg-tertiary/10 border-tertiary/20' : 'bg-surface-container-low'
-    }`}>
-      {isHigh && (
-        <AlertTriangle className={`w-5 h-5 shrink-0 ${isExceeded ? 'text-error' : 'text-tertiary'}`} />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-            {t('wallet.dailySpend')}
-          </span>
-          <span className="text-xs text-on-surface-variant">
-            ${spentNum.toFixed(2)} / ${limitNum.toFixed(2)} USD
-          </span>
+    <div className="rounded-2xl ghost-border bg-surface-container-low p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <AlertTriangle className={`w-4 h-4 ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-primary'}`} />
+        <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+          {t('wallet.dailySpend')}
+        </span>
+        {resetTime && (
+          <span className="text-[10px] text-on-surface-variant ml-auto">{t('wallet.resets')} {resetTime}</span>
+        )}
+      </div>
+
+      <div className="flex flex-col items-center">
+        {/* Gauge SVG */}
+        <div className="relative" style={{ width: 128, height: 72 }}>
+          <svg width="128" height="72" viewBox="0 0 128 72" className="overflow-visible">
+            {/* Background arc */}
+            <path
+              d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+              fill="none"
+              stroke="currentColor"
+              className="text-surface-container-high"
+              strokeWidth={STROKE}
+              strokeLinecap="round"
+            />
+            {/* Filled arc */}
+            {hasLimit && filled > 0 && (
+              <path
+                d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+                fill="none"
+                stroke={arcColor}
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+                strokeDasharray={`${arcLen}`}
+                strokeDashoffset={`${arcLen - filled}`}
+                style={{ filter: `drop-shadow(0 0 6px ${glowColor})`, transition: 'stroke-dashoffset 0.8s ease' }}
+              />
+            )}
+            {/* Tick marks */}
+            {[0, 0.25, 0.5, 0.75, 1].map(p => {
+              const angle = Math.PI * (1 - p);
+              const x1 = cx + (R + 6) * Math.cos(angle);
+              const y1 = cy - (R + 6) * Math.sin(angle);
+              const x2 = cx + (R + 10) * Math.cos(angle);
+              const y2 = cy - (R + 10) * Math.sin(angle);
+              return <line key={p} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" className="text-outline" strokeWidth="1.5" strokeLinecap="round" />;
+            })}
+            {/* Needle */}
+            {hasLimit && (() => {
+              const needleAngle = Math.PI * (1 - pct);
+              const nx = cx + (R - 18) * Math.cos(needleAngle);
+              const ny = cy - (R - 18) * Math.sin(needleAngle);
+              return (
+                <>
+                  <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={arcColor} strokeWidth="2.5" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${glowColor})`, transition: 'all 0.8s ease' }} />
+                  <circle cx={cx} cy={cy} r="4" fill={arcColor} style={{ filter: `drop-shadow(0 0 4px ${glowColor})` }} />
+                </>
+              );
+            })()}
+            {!hasLimit && (
+              <circle cx={cx} cy={cy} r="4" fill="currentColor" className="text-outline" />
+            )}
+          </svg>
         </div>
-        <div className="w-full h-1.5 rounded-full bg-surface-container-high overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${
-              isExceeded ? 'bg-error' : isHigh ? 'bg-tertiary' : 'bg-primary'
-            }`}
-            style={{ width: `${pct * 100}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between mt-1.5">
-          <span className={`text-xs font-medium ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
-            {isExceeded
-              ? t('wallet.limitExceeded')
-              : `$${remainNum.toFixed(2)} ${t('wallet.remaining')}`}
-          </span>
-          {resetTime && (
-            <span className="text-[10px] text-on-surface-variant">{t('wallet.resets')} {resetTime}</span>
+
+        {/* Center value */}
+        <div className="text-center -mt-2">
+          <p className={`text-2xl font-headline font-black tabular-nums tracking-tight ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface'}`}>
+            ${spentNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          {hasLimit ? (
+            <p className="text-xs text-on-surface-variant mt-0.5">
+              / ${limitNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+            </p>
+          ) : (
+            <p className="text-xs text-on-surface-variant mt-0.5">{t('wallet.dailySpend')}</p>
           )}
         </div>
+
+        {/* Status text */}
+        {hasLimit && (
+          <p className={`text-xs font-medium mt-3 ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+            {isExceeded
+              ? t('wallet.limitExceeded')
+              : `$${remainNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${t('wallet.remaining')}`}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -384,9 +449,9 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
         </div>
       </div>
 
-      {/* Daily Spend Banner */}
-      {dailySpent && dailySpent.daily_limit_usd && (
-        <DailySpendBanner spent={dailySpent} />
+      {/* Daily Spend Gauge */}
+      {dailySpent && (
+        <DailySpendGauge spent={dailySpent} />
       )}
 
       {/* Tab bar — only 2 tabs */}
