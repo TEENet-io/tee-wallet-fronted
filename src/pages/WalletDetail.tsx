@@ -424,9 +424,6 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
         </div>
       </div>
 
-      {/* Daily Spend Gauge */}
-      {dailySpent && <SpendGaugeBanner spent={dailySpent} />}
-
       {/* Tab bar — only 2 tabs */}
       <div className="flex gap-1 p-1 bg-surface-container-low rounded-2xl ghost-border">
         <button
@@ -454,7 +451,8 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       </div>
 
       {/* Tab content */}
-      <div className="animate-in fade-in duration-200" key={activeTab}>
+      <div className="animate-in fade-in duration-200 space-y-4" key={activeTab}>
+        {activeTab === 'policy' && dailySpent && <SpendGaugeBanner spent={dailySpent} />}
         {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} />}
         {activeTab === 'program' && <ProgramPanel walletId={wallet.id} chainFamily={family} />}
       </div>
