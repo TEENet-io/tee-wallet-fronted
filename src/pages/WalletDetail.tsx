@@ -194,7 +194,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   useEffect(() => {
     if (!walletId) return;
     api<DailySpent>(`/api/wallets/${walletId}/daily-spent`).then(res => {
-      if (res.success) setDailySpent(res);
+      if (res.daily_spent_usd !== undefined) setDailySpent(res);
     });
   }, [walletId]);
 
