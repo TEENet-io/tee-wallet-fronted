@@ -82,6 +82,56 @@ interface ApprovalCardProps {
   onClick: () => void;
 }
 
+function parseContext(approval: Approval) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let ctx: Record<string, any> = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let pol: Record<string, any> = {};
+  try { if (approval.tx_context) ctx = JSON.parse(approval.tx_context); } catch { /* */ }
+  try { if (approval.policy_data) pol = JSON.parse(approval.policy_data); } catch { /* */ }
+
+  const at = approval.approval_type ?? '';
+  const isPolicyChange = at === 'policy_change';
+  const isContractAdd = at === 'contract_add' || at === 'contract_update';
+
+  // Type label
+  let typeLabel = (approval.action ?? '').replace(/_/g, ' ');
+  if (ctx.type === 'spl_transfer') typeLabel = 'SPL Transfer';
+  else if (ctx.type === 'erc20_transfer') typeLabel = 'ERC-20 Transfer';
+  else if (ctx.type === 'program_call') typeLabel = 'Program Call';
+  else if (ctx.type === 'approve_token' || ctx.action === 'approve_token') typeLabel = 'Token Approve';
+  else if (ctx.type === 'revoke_approval' || ctx.action === 'revoke_approval') typeLabel = 'Revoke Approval';
+  else if (isPolicyChange) typeLabel = 'Policy Change';
+  else if (isContractAdd) typeLabel = at === 'contract_update' ? 'Whitelist Update' : 'Whitelist Add';
+  else if (at === 'sign') typeLabel = 'Sign';
+  else if (at === 'contract_call') typeLabel = 'Contract Call';
+  else if (at === 'transfer') typeLabel = 'Transfer';
+
+  // Amount display
+  const amount = ctx.amount || approval.amount;
+  const currency = ctx.currency || ctx.symbol || approval.currency;
+
+  // Summary line
+  let summary = '';
+  if (isPolicyChange) {
+    summary = `Threshold $${pol.threshold_usd || pol.threshold_amount || '?'}`;
+    if (pol.daily_limit_usd) summary += ` · Daily $${pol.daily_limit_usd}`;
+  } else if (isContractAdd) {
+    const addr = pol.contract_address || '';
+    summary = pol.label || (addr ? `${addr.slice(0, 8)}…${addr.slice(-4)}` : '');
+    if (pol.symbol) summary += ` (${pol.symbol})`;
+  } else {
+    const to = ctx.to || approval.to_address;
+    const contract = ctx.contract || ctx.program_id;
+    const target = to || contract;
+    if (target) summary = `${target.slice(0, 8)}…${target.slice(-4)}`;
+    if (ctx.method) summary += summary ? ` · ${ctx.method}` : ctx.method;
+    if (ctx.chain) summary += summary ? ` · ${ctx.chain}` : ctx.chain;
+  }
+
+  return { typeLabel, amount, currency, summary };
+}
+
 function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining(approval.expires_at));
   const [progress, setProgress] = useState(() => getTimeProgress(approval));
@@ -96,6 +146,7 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
   }, [approval]);
 
   const isPending = approval.status === 'pending';
+  const { typeLabel, amount, currency, summary } = parseContext(approval);
 
   return (
     <button
@@ -111,6 +162,9 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <StatusBadge status={approval.status} />
+              <span className="text-[10px] text-primary font-bold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 uppercase tracking-wider">
+                {typeLabel}
+              </span>
               {approval.agent_name && (
                 <span className="text-[10px] text-on-surface-variant font-medium px-2 py-0.5 rounded-full bg-surface-container-high border border-outline-variant/20">
                   {approval.agent_name}
@@ -118,19 +172,19 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
               )}
             </div>
 
-            <p className="font-headline font-bold text-on-surface text-lg leading-tight mb-1 truncate capitalize">
-              {(approval.action ?? '').replace(/_/g, ' ')}
-            </p>
-
-            {(approval.amount || approval.currency) && (
-              <p className="text-2xl font-headline font-black text-on-surface tabular-nums">
-                {approval.amount && <span>{Number(approval.amount).toLocaleString()}</span>}
-                {approval.currency && <span className="text-base font-bold text-on-surface-variant ml-1">{approval.currency}</span>}
+            {(amount || currency) && (
+              <p className="text-2xl font-headline font-black text-on-surface tabular-nums mb-1">
+                {amount && <span>{Number(amount).toLocaleString()}</span>}
+                {currency && <span className="text-base font-bold text-on-surface-variant ml-1">{currency}</span>}
               </p>
             )}
 
+            {summary && (
+              <p className="text-xs text-on-surface-variant font-mono truncate">{summary}</p>
+            )}
+
             {approval.memo && (
-              <p className="text-xs text-on-surface-variant mt-1.5 line-clamp-1">{approval.memo}</p>
+              <p className="text-xs text-on-surface-variant mt-1 line-clamp-1">{approval.memo}</p>
             )}
           </div>
 
