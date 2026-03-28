@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
-import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, Pencil, X, Trash2, Fuel } from 'lucide-react';
+import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, Pencil, X, Trash2 } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -36,97 +36,6 @@ function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
   );
 }
 
-
-function SpendGaugeBanner({ spent }: { spent: DailySpent }) {
-  const { t } = useLanguage();
-  const spentNum = parseFloat(spent.daily_spent_usd) || 0;
-  const limitNum = parseFloat(spent.daily_limit_usd) || 0;
-  const remainNum = parseFloat(spent.remaining_usd) || 0;
-  const hasLimit = limitNum > 0;
-  const pct = hasLimit ? Math.min(1, spentNum / limitNum) : 0;
-  const isHigh = hasLimit && pct >= 0.8;
-  const isExceeded = hasLimit && pct >= 1;
-  const resetTime = spent.reset_at
-    ? new Date(spent.reset_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    : '';
-
-  const R = 36;
-  const STROKE = 5;
-  const cx = 42;
-  const cy = 40;
-  const arcLen = Math.PI * R;
-  const filled = hasLimit ? arcLen * pct : 0;
-  const arcColor = isExceeded ? '#f87171' : isHigh ? '#fb923c' : '#7c3aed';
-  const glowColor = isExceeded ? 'rgba(248,113,113,0.5)' : isHigh ? 'rgba(251,146,60,0.4)' : 'rgba(124,58,237,0.35)';
-
-  return (
-    <div className="rounded-2xl ghost-border bg-surface-container-low p-4 flex items-center gap-5">
-      {/* Gauge */}
-      <div className="shrink-0 flex flex-col items-center" style={{ width: 84 }}>
-        <div style={{ width: 84, height: 48 }}>
-          <svg width="84" height="48" viewBox="0 0 84 48" className="overflow-visible">
-            <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
-              fill="none" stroke="currentColor" className="text-surface-container-high"
-              strokeWidth={STROKE} strokeLinecap="round" />
-            {hasLimit && filled > 0 && (
-              <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
-                fill="none" stroke={arcColor} strokeWidth={STROKE} strokeLinecap="round"
-                strokeDasharray={`${arcLen}`} strokeDashoffset={`${arcLen - filled}`}
-                style={{ filter: `drop-shadow(0 0 4px ${glowColor})`, transition: 'stroke-dashoffset 0.8s ease' }} />
-            )}
-            {[0, 0.5, 1].map(p => {
-              const angle = Math.PI * (1 - p);
-              const x1 = cx + (R + 3) * Math.cos(angle);
-              const y1 = cy - (R + 3) * Math.sin(angle);
-              const x2 = cx + (R + 6) * Math.cos(angle);
-              const y2 = cy - (R + 6) * Math.sin(angle);
-              return <line key={p} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" className="text-outline" strokeWidth="1" strokeLinecap="round" />;
-            })}
-            {hasLimit && (() => {
-              const a = Math.PI * (1 - pct);
-              const nx = cx + (R - 12) * Math.cos(a);
-              const ny = cy - (R - 12) * Math.sin(a);
-              return <>
-                <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={arcColor} strokeWidth="2" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 3px ${glowColor})`, transition: 'all 0.8s ease' }} />
-                <circle cx={cx} cy={cy} r="2.5" fill={arcColor} style={{ filter: `drop-shadow(0 0 3px ${glowColor})` }} />
-              </>;
-            })()}
-            {!hasLimit && <circle cx={cx} cy={cy} r="2.5" fill="currentColor" className="text-outline" />}
-          </svg>
-        </div>
-        {hasLimit && (
-          <span className={`text-[9px] font-bold tabular-nums -mt-0.5 ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-primary'}`}>
-            {Math.round(pct * 100)}%
-          </span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <Fuel className={`w-4 h-4 ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-primary'}`} />
-          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t('wallet.dailySpend')}</span>
-        </div>
-        <p className={`text-xl font-headline font-black tabular-nums tracking-tight ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface'}`}>
-          ${spentNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          {hasLimit && (
-            <span className="text-sm font-bold text-on-surface-variant ml-1">
-              / ${limitNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          )}
-        </p>
-        <div className="flex items-center gap-3 mt-1">
-          {hasLimit && (
-            <span className={`text-xs font-medium ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
-              {isExceeded ? t('wallet.limitExceeded') : `$${remainNum.toFixed(2)} ${t('wallet.remaining')}`}
-            </span>
-          )}
-          {resetTime && <span className="text-[10px] text-outline">{t('wallet.resets')} {resetTime}</span>}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface WalletDetailProps {
   walletId: string;
@@ -451,9 +360,8 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
       </div>
 
       {/* Tab content */}
-      <div className="animate-in fade-in duration-200 space-y-4" key={activeTab}>
-        {activeTab === 'policy' && dailySpent && <SpendGaugeBanner spent={dailySpent} />}
-        {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} />}
+      <div className="animate-in fade-in duration-200" key={activeTab}>
+        {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} dailySpent={dailySpent} />}
         {activeTab === 'program' && <ProgramPanel walletId={wallet.id} chainFamily={family} />}
       </div>
 
