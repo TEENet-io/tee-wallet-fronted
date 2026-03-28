@@ -7,22 +7,73 @@ import { useConfirm } from '../ConfirmDialog';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { AllowedContract } from '../../types';
 
-// Default well-known contracts by chain family
-const EVM_PROGRAMS = [
-  { label: 'Uniswap V3 Router', address: '0xE592427A0AEce92De3Edee1F18E0157C05861564', abi_hint: 'DEX', symbol: 'UNI', decimals: 18 },
-  { label: 'USDT (Tether)', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
-  { label: 'USDC (Circle)', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
-  { label: 'Aave V3 Pool', address: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', abi_hint: 'Lending', symbol: 'AAVE', decimals: 18 },
-  { label: 'Lido stETH', address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', abi_hint: 'Staking', symbol: 'stETH', decimals: 18 },
-];
+// Default well-known contracts per chain
+type Preset = { label: string; address: string; abi_hint: string; symbol: string; decimals: number };
 
-const SOLANA_PROGRAMS = [
-  { label: 'USDC (Solana)', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
-  { label: 'USDT (Solana)', address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
-  { label: 'Jupiter Aggregator', address: 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', abi_hint: 'DEX', symbol: 'JUP', decimals: 6 },
-  { label: 'Raydium AMM', address: '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', abi_hint: 'DEX', symbol: 'RAY', decimals: 6 },
-  { label: 'Marinade Finance', address: 'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD', abi_hint: 'Staking', symbol: 'mSOL', decimals: 9 },
-];
+const PRESETS: Record<string, Preset[]> = {
+  // ── EVM Mainnet ──
+  ethereum: [
+    { label: 'Uniswap V3 Router', address: '0xE592427A0AEce92De3Edee1F18E0157C05861564', abi_hint: 'DEX', symbol: 'UNI', decimals: 18 },
+    { label: 'USDT', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+    { label: 'USDC', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'Aave V3 Pool', address: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', abi_hint: 'Lending', symbol: 'AAVE', decimals: 18 },
+    { label: 'Lido stETH', address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', abi_hint: 'Staking', symbol: 'stETH', decimals: 18 },
+  ],
+  // ── Sepolia Testnet ──
+  sepolia: [
+    { label: 'USDC', address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDT', address: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+    { label: 'WETH', address: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14', abi_hint: 'Wrapped', symbol: 'WETH', decimals: 18 },
+    { label: 'DAI', address: '0x68194a729C2450ad26072b3D33ADaCbcef39D574', abi_hint: 'Stablecoin', symbol: 'DAI', decimals: 18 },
+    { label: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E', abi_hint: 'DEX', symbol: 'UNI', decimals: 18 },
+  ],
+  // ── Holesky Testnet ──
+  holesky: [
+    { label: 'WETH', address: '0x94373a4919B3240D86eA41593D5eBa789FEF3848', abi_hint: 'Wrapped', symbol: 'WETH', decimals: 18 },
+  ],
+  // ── Base Mainnet ──
+  base: [
+    { label: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDbC', address: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA', abi_hint: 'Stablecoin', symbol: 'USDbC', decimals: 6 },
+  ],
+  // ── Base Sepolia ──
+  'base-sepolia': [
+    { label: 'USDC', address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+  ],
+  // ── BSC ──
+  bsc: [
+    { label: 'USDT (BSC)', address: '0x55d398326f99059fF775485246999027B3197955', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 18 },
+    { label: 'USDC (BSC)', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 18 },
+    { label: 'PancakeSwap Router', address: '0x10ED43C718714eb63d5aA57B78B54704E256024E', abi_hint: 'DEX', symbol: 'CAKE', decimals: 18 },
+  ],
+  // ── Polygon ──
+  polygon: [
+    { label: 'USDC', address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDT', address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+  ],
+  // ── Arbitrum ──
+  arbitrum: [
+    { label: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDT', address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+  ],
+  // ── Optimism ──
+  optimism: [
+    { label: 'USDC', address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDT', address: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+  ],
+  // ── Solana Mainnet ──
+  solana: [
+    { label: 'USDC', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDT', address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+    { label: 'Jupiter Aggregator', address: 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', abi_hint: 'DEX', symbol: 'JUP', decimals: 6 },
+    { label: 'Raydium AMM', address: '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', abi_hint: 'DEX', symbol: 'RAY', decimals: 6 },
+    { label: 'Marinade Finance', address: 'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD', abi_hint: 'Staking', symbol: 'mSOL', decimals: 9 },
+  ],
+  // ── Solana Devnet ──
+  'solana-devnet': [
+    { label: 'USDC (Devnet)', address: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+  ],
+};
 
 function truncateAddr(addr: string): string {
   if (addr.length <= 16) return addr;
@@ -44,9 +95,10 @@ type ActivePanel = { id: string | number; mode: 'edit' } | null;
 interface ProgramPanelProps {
   walletId: string;
   chainFamily: 'evm' | 'solana';
+  chainName: string;
 }
 
-export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProps) {
+export default function ProgramPanel({ walletId, chainFamily, chainName }: ProgramPanelProps) {
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useLanguage();
@@ -158,9 +210,9 @@ export default function ProgramPanel({ walletId, chainFamily }: ProgramPanelProp
     }
   }
 
-  const DEFAULT_PROGRAMS = chainFamily === 'solana' ? SOLANA_PROGRAMS : EVM_PROGRAMS;
+  const DEFAULT_PROGRAMS = PRESETS[chainName] ?? PRESETS[chainFamily === 'solana' ? 'solana' : 'ethereum'] ?? [];
 
-  async function handleAddDefault(program: typeof EVM_PROGRAMS[number]) {
+  async function handleAddDefault(program: Preset) {
     setAdding(true);
     try {
       const passkeyBody = await getFreshPasskeyCredential();
