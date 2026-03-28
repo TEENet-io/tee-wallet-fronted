@@ -1,15 +1,110 @@
 import { useState, useEffect, useCallback, type ChangeEvent, type FormEvent } from 'react';
-import { Shield, Loader2, Save, Trash2 } from 'lucide-react';
+import { Shield, Loader2, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useConfirm } from '../ConfirmDialog';
-import type { WalletPolicy } from '../../types';
+import type { WalletPolicy, DailySpent } from '../../types';
 
 const THRESHOLD_MAX = 10000;
 
-export default function PolicyPanel({ walletId }: { walletId: string }) {
+// ---------------------------------------------------------------------------
+// Compact fuel-gauge SVG
+// ---------------------------------------------------------------------------
+function SpendGauge({ spent }: { spent: DailySpent }) {
+  const { t } = useLanguage();
+  const spentNum = parseFloat(spent.daily_spent_usd) || 0;
+  const limitNum = parseFloat(spent.daily_limit_usd) || 0;
+  const remainNum = parseFloat(spent.remaining_usd) || 0;
+  const hasLimit = limitNum > 0;
+  const pct = hasLimit ? Math.min(1, spentNum / limitNum) : 0;
+  const isHigh = hasLimit && pct >= 0.8;
+  const isExceeded = hasLimit && pct >= 1;
+
+  const resetTime = spent.reset_at
+    ? new Date(spent.reset_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  const R = 40;
+  const STROKE = 6;
+  const cx = 48;
+  const cy = 46;
+  const arcLen = Math.PI * R;
+  const filled = hasLimit ? arcLen * pct : 0;
+  const arcColor = isExceeded ? '#f87171' : isHigh ? '#fb923c' : '#7c3aed';
+  const glowColor = isExceeded ? 'rgba(248,113,113,0.5)' : isHigh ? 'rgba(251,146,60,0.4)' : 'rgba(124,58,237,0.35)';
+
+  return (
+    <div className="flex flex-col items-center">
+      {/* Gauge SVG */}
+      <div className="relative" style={{ width: 96, height: 54 }}>
+        <svg width="96" height="54" viewBox="0 0 96 54" className="overflow-visible">
+          <path
+            d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+            fill="none" stroke="currentColor" className="text-surface-container-high"
+            strokeWidth={STROKE} strokeLinecap="round"
+          />
+          {hasLimit && filled > 0 && (
+            <path
+              d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+              fill="none" stroke={arcColor} strokeWidth={STROKE} strokeLinecap="round"
+              strokeDasharray={`${arcLen}`} strokeDashoffset={`${arcLen - filled}`}
+              style={{ filter: `drop-shadow(0 0 4px ${glowColor})`, transition: 'stroke-dashoffset 0.8s ease' }}
+            />
+          )}
+          {[0, 0.25, 0.5, 0.75, 1].map(p => {
+            const angle = Math.PI * (1 - p);
+            const x1 = cx + (R + 4) * Math.cos(angle);
+            const y1 = cy - (R + 4) * Math.sin(angle);
+            const x2 = cx + (R + 7) * Math.cos(angle);
+            const y2 = cy - (R + 7) * Math.sin(angle);
+            return <line key={p} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" className="text-outline" strokeWidth="1" strokeLinecap="round" />;
+          })}
+          {hasLimit && (() => {
+            const needleAngle = Math.PI * (1 - pct);
+            const nx = cx + (R - 14) * Math.cos(needleAngle);
+            const ny = cy - (R - 14) * Math.sin(needleAngle);
+            return (
+              <>
+                <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={arcColor} strokeWidth="2" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 3px ${glowColor})`, transition: 'all 0.8s ease' }} />
+                <circle cx={cx} cy={cy} r="3" fill={arcColor} style={{ filter: `drop-shadow(0 0 3px ${glowColor})` }} />
+              </>
+            );
+          })()}
+          {!hasLimit && <circle cx={cx} cy={cy} r="3" fill="currentColor" className="text-outline" />}
+        </svg>
+      </div>
+
+      {/* Value */}
+      <p className={`text-lg font-headline font-black tabular-nums tracking-tight -mt-1 ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface'}`}>
+        ${spentNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </p>
+      {hasLimit ? (
+        <p className="text-[10px] text-on-surface-variant">
+          / ${limitNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+      ) : (
+        <p className="text-[10px] text-on-surface-variant">{t('wallet.dailySpend')}</p>
+      )}
+      {hasLimit && (
+        <p className={`text-[10px] font-medium mt-0.5 ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+          {isExceeded ? t('wallet.limitExceeded') : `$${remainNum.toFixed(2)} ${t('wallet.remaining')}`}
+        </p>
+      )}
+      {resetTime && (
+        <p className="text-[9px] text-outline mt-0.5">{t('wallet.resets')} {resetTime}</p>
+      )}
+    </div>
+  );
+}
+
+interface PolicyPanelProps {
+  walletId: string;
+  dailySpent?: DailySpent | null;
+}
+
+export default function PolicyPanel({ walletId, dailySpent }: PolicyPanelProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const { getFreshPasskeyCredential } = useAuth();
@@ -136,13 +231,16 @@ export default function PolicyPanel({ walletId }: { walletId: string }) {
     <>
       <ConfirmDialog />
       <div className="bg-surface-container-low rounded-2xl ghost-border overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-outline-variant/10">
-          <Shield className="w-5 h-5 text-primary" />
-          <div>
-            <p className="font-semibold text-on-surface text-sm">{t('policy.spendTitle')}</p>
-            <p className="text-xs text-on-surface-variant">{t('policy.spendSubtitle')}</p>
+        {/* Header with gauge */}
+        <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-outline-variant/10">
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-primary" />
+            <div>
+              <p className="font-semibold text-on-surface text-sm">{t('policy.spendTitle')}</p>
+              <p className="text-xs text-on-surface-variant">{t('policy.spendSubtitle')}</p>
+            </div>
           </div>
+          {dailySpent && <SpendGauge spent={dailySpent} />}
         </div>
 
         {loading ? (
