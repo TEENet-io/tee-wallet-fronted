@@ -390,51 +390,55 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
       {/* Status Header */}
       <div className="relative bg-surface-container-low rounded-3xl p-6 ghost-border overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[100px] -mr-16 -mt-16 pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
-              <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.15em]`}>{t(sc.labelKey)}</span>
-            </div>
-            {displayAmount ? (
-              <>
-                <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
-                  {displayAction}
-                </h1>
+        <div className="relative space-y-4">
+          {/* Status label */}
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
+            <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.15em]`}>{t(sc.labelKey)}</span>
+          </div>
+
+          {/* Timer row: countdown (compact) + amount */}
+          {isPending && approval.expires_at ? (
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-high rounded-lg border border-secondary/20 shrink-0">
+                <Clock className="w-3.5 h-3.5 text-secondary" />
+                <div>
+                  <p className="text-[9px] text-on-surface-variant uppercase tracking-widest leading-none">{t('approval.expires')}</p>
+                  <p className="text-sm font-headline font-black text-secondary tabular-nums leading-tight">{timeRemaining?.display ?? '--:--'}</p>
+                </div>
+                <div className="w-12 bg-surface-container-low h-1 rounded-full overflow-hidden">
+                  <div className="bg-secondary h-full transition-all duration-1000" style={{ width: `${progress * 100}%` }} />
+                </div>
+              </div>
+              {displayAmount && (
                 <p className="text-3xl font-headline font-black text-on-surface tabular-nums">
                   {Number(displayAmount).toLocaleString()}
                   {displayCurrency && <span className="text-lg font-bold text-on-surface-variant ml-1.5">{displayCurrency}</span>}
                 </p>
-              </>
-            ) : (
-              <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
-                {displayAction}
-              </h1>
-            )}
-            {(approval.agent_intent || approval.memo) && (
-              <p className="text-sm text-on-surface-variant">{approval.agent_intent || approval.memo}</p>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-4 flex-wrap">
+              {!isPending && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-high rounded-lg shrink-0">
+                  <Clock className="w-3.5 h-3.5 text-on-surface-variant" />
+                  <p className="text-sm text-on-surface-variant">
+                    {new Date(approval.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              )}
+              {displayAmount && (
+                <p className="text-3xl font-headline font-black text-on-surface tabular-nums">
+                  {Number(displayAmount).toLocaleString()}
+                  {displayCurrency && <span className="text-lg font-bold text-on-surface-variant ml-1.5">{displayCurrency}</span>}
+                </p>
+              )}
+            </div>
+          )}
 
-          {isPending && approval.expires_at ? (
-            <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-high rounded-xl border border-secondary/20 flex-shrink-0">
-              <Clock className="w-4 h-4 text-secondary" />
-              <div>
-                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">{t('approval.expires')}</p>
-                <p className="text-lg font-headline font-black text-secondary tabular-nums">{timeRemaining?.display ?? '--:--'}</p>
-              </div>
-              <div className="w-16 bg-surface-container-low h-1 rounded-full overflow-hidden">
-                <div className="bg-secondary h-full transition-all duration-1000" style={{ width: `${progress * 100}%` }} />
-              </div>
-            </div>
-          ) : !isPending ? (
-            <div className="flex items-center gap-2 px-4 py-3 bg-surface-container-high rounded-xl flex-shrink-0">
-              <Clock className="w-4 h-4 text-on-surface-variant" />
-              <p className="text-sm text-on-surface-variant">
-                {new Date(approval.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </div>
-          ) : null}
+          {(approval.agent_intent || approval.memo) && (
+            <p className="text-sm text-on-surface-variant">{approval.agent_intent || approval.memo}</p>
+          )}
         </div>
       </div>
 
