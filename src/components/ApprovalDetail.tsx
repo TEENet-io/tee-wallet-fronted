@@ -151,6 +151,7 @@ function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => st
       {isContractAdd && pol.allowed_methods && <Row icon={Info} label="Allowed Methods" value={pol.allowed_methods} />}
 
       {/* Transaction context */}
+      {!isPolicyChange && !isContractAdd && (ctx.amount || approval.amount) && <Row icon={Zap} label="Amount" value={`${ctx.amount || approval.amount}${ctx.currency || ctx.symbol || approval.currency ? ` ${ctx.currency || ctx.symbol || approval.currency}` : ''}`} />}
       {!isPolicyChange && !isContractAdd && ctx.from && <Row icon={Key} label="From" value={ctx.from} mono />}
       {!isPolicyChange && !isContractAdd && (ctx.to || approval.to_address) && <Row icon={Key} label="To" value={ctx.to || approval.to_address} mono />}
       {!isPolicyChange && !isContractAdd && ctx.contract && <Row icon={Key} label={ctx.type === 'approve_token' || ctx.type === 'revoke_approval' ? 'Token Contract' : 'Contract'} value={ctx.contract} mono />}
@@ -367,6 +368,14 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
   const sc = statusColors(approval.status);
   const busy = approving || rejecting;
 
+  // Parse tx_context for header display
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let headerCtx: Record<string, any> = {};
+  try { if (approval.tx_context) headerCtx = JSON.parse(approval.tx_context); } catch { /* */ }
+  const displayAmount = headerCtx.amount || approval.amount;
+  const displayCurrency = headerCtx.currency || headerCtx.symbol || approval.currency;
+  const displayAction = (approval.action ?? '').replace(/_/g, ' ');
+
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       {/* Back */}
@@ -387,11 +396,21 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
               <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
               <span className={`${sc.text} text-xs font-bold uppercase tracking-[0.15em]`}>{t(sc.labelKey)}</span>
             </div>
-            <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
-              {approval.amount
-                ? `${(approval.action ?? '').replace(/_/g, ' ')} ${Number(approval.amount).toLocaleString()}${approval.currency ? ` ${approval.currency}` : ''}`
-                : (approval.action ?? '').replace(/_/g, ' ')}
-            </h1>
+            {displayAmount ? (
+              <>
+                <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
+                  {displayAction}
+                </h1>
+                <p className="text-3xl font-headline font-black text-on-surface tabular-nums">
+                  {Number(displayAmount).toLocaleString()}
+                  {displayCurrency && <span className="text-lg font-bold text-on-surface-variant ml-1.5">{displayCurrency}</span>}
+                </p>
+              </>
+            ) : (
+              <h1 className="text-xl md:text-2xl font-headline font-bold text-on-surface tracking-tight capitalize">
+                {displayAction}
+              </h1>
+            )}
             {(approval.agent_intent || approval.memo) && (
               <p className="text-sm text-on-surface-variant">{approval.agent_intent || approval.memo}</p>
             )}
