@@ -292,7 +292,7 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
             <div className="flex items-center justify-between bg-surface-container rounded-xl border border-outline-variant/10 px-4 py-3">
               <div>
                 <p className="text-sm font-medium text-on-surface">{t('policy.enabled')}</p>
-                <p className="text-xs text-on-surface-variant">{t('policy.whitelistOnlyDesc')}</p>
+                <p className="text-xs text-on-surface-variant">{t('policy.enabledDesc')}</p>
               </div>
               <button
                 type="button"
