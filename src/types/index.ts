@@ -26,7 +26,8 @@ export interface Wallet {
 
 export interface AllowedContract {
   id: number;
-  wallet_id: string;
+  user_id: number;
+  chain: string;
   contract_address: string;
   label: string;
   symbol?: string;
@@ -86,6 +87,7 @@ export interface AuditLog {
   wallet_id?: string;
   ip?: string;
   created_at: string;
+  approved_at?: string;
 }
 
 export interface APIKey {

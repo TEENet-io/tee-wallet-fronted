@@ -223,10 +223,15 @@ export default function AuditHistory() {
                           {log.status && log.status !== 'success' && (
                             <span className="text-[10px] font-bold text-error uppercase">{log.status}</span>
                           )}
-                          <span className="ml-auto text-[11px] text-on-surface-variant tabular-nums whitespace-nowrap">
+                          <span className="ml-auto flex items-center gap-2 text-[11px] text-on-surface-variant tabular-nums whitespace-nowrap">
                             {new Date(log.created_at).toLocaleTimeString(undefined, {
                               hour: '2-digit', minute: '2-digit',
                             })}
+                            {log.approved_at && (
+                              <span className="text-emerald-400" title={new Date(log.approved_at).toLocaleString()}>
+                                → {new Date(log.approved_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
                           </span>
                         </div>
 
@@ -244,6 +249,12 @@ export default function AuditHistory() {
                                 <span className="text-on-surface font-mono break-all">{String(v)}</span>
                               </div>
                             ))}
+                            {log.approved_at && (
+                              <div className="flex gap-2 text-xs">
+                                <span className="text-on-surface-variant shrink-0 w-24 text-right">approved</span>
+                                <span className="text-on-surface font-mono">{new Date(log.approved_at).toLocaleString()}</span>
+                              </div>
+                            )}
                             {log.auth_mode && (
                               <div className="flex gap-2 text-xs">
                                 <span className="text-on-surface-variant shrink-0 w-24 text-right">auth</span>
