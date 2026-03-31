@@ -28,27 +28,32 @@ function HeaderGauge({ spent }: { spent: DailySpent }) {
   const cx = 36;
   const cy = 34;
   const arcLen = Math.PI * R;
-  const filled = hasLimit ? arcLen * pct : 0;
+  // remainPct: 1 = full (right), 0 = empty (left) — fuel gauge direction
+  const remainPct = hasLimit ? Math.max(0, 1 - pct) : 1;
+  const filledRemain = arcLen * remainPct;
   const arcColor = isExceeded ? '#f87171' : isHigh ? '#fb923c' : '#7c3aed';
   const glowColor = isExceeded ? 'rgba(248,113,113,0.5)' : isHigh ? 'rgba(251,146,60,0.4)' : 'rgba(124,58,237,0.35)';
 
   return (
     <div className="flex items-center gap-3">
-      {/* Mini gauge */}
+      {/* Mini gauge — fuel style: full on right, empty on left */}
       <div className="shrink-0 flex flex-col items-center" style={{ width: 72 }}>
         <div style={{ width: 72, height: 40 }}>
           <svg width="72" height="40" viewBox="0 0 72 40" className="overflow-visible">
+            {/* Background arc (empty track) */}
             <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
               fill="none" stroke="currentColor" className="text-surface-container-high"
               strokeWidth={STROKE} strokeLinecap="round" />
-            {hasLimit && filled > 0 && (
-              <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+            {/* Filled arc: draws from right side, shrinks as spent increases */}
+            {hasLimit && filledRemain > 0 && (
+              <path d={`M ${cx + R} ${cy} A ${R} ${R} 0 0 0 ${cx - R} ${cy}`}
                 fill="none" stroke={arcColor} strokeWidth={STROKE} strokeLinecap="round"
-                strokeDasharray={`${arcLen}`} strokeDashoffset={`${arcLen - filled}`}
+                strokeDasharray={`${arcLen}`} strokeDashoffset={`${arcLen - filledRemain}`}
                 style={{ filter: `drop-shadow(0 0 3px ${glowColor})`, transition: 'stroke-dashoffset 0.8s ease' }} />
             )}
+            {/* Needle: points to remaining level (right=full, left=empty) */}
             {hasLimit && (() => {
-              const a = Math.PI * (1 - pct);
+              const a = Math.PI * remainPct;
               const nx = cx + (R - 10) * Math.cos(a);
               const ny = cy - (R - 10) * Math.sin(a);
               return <>
@@ -205,19 +210,19 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
     <>
       <ConfirmDialog />
       <div className="bg-surface-container-low rounded-2xl ghost-border overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-outline-variant/10">
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-primary" />
-            <div>
-              <p className="font-semibold text-on-surface text-sm">{t('policy.spendTitle')}</p>
-              <p className="text-xs text-on-surface-variant">{t('policy.spendSubtitle')}</p>
+        {/* Header — row 1: title + toggle, row 2: gauge (mobile stacks) */}
+        <div className="px-6 py-5 border-b border-outline-variant/10 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Shield className="w-5 h-5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-on-surface text-sm truncate">{t('policy.spendTitle')}</p>
+                <p className="text-xs text-on-surface-variant hidden sm:block">{t('policy.spendSubtitle')}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4 shrink-0">
             {/* Enabled toggle */}
             {!loading && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className={`text-xs font-medium ${enabled ? 'text-primary' : 'text-outline'}`}>
                   {enabled ? t('policy.enabled') : t('policy.disabled')}
                 </span>
@@ -236,8 +241,8 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
                 </button>
               </div>
             )}
-            {dailySpent && <HeaderGauge spent={dailySpent} />}
           </div>
+          {dailySpent && <HeaderGauge spent={dailySpent} />}
         </div>
 
         {loading ? (
@@ -315,7 +320,7 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
                 <p className="text-xs font-medium text-on-surface-variant uppercase tracking-wider mb-2">
                   {t('policy.current')}
                 </p>
-                <dl className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                <dl className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <dt className="text-xs text-outline">{t('policy.threshold')}</dt>
                     <dd className="font-medium text-on-surface">
@@ -326,12 +331,6 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
                     <dt className="text-xs text-outline">{t('policy.maxAmount')}</dt>
                     <dd className="font-medium text-on-surface">
                       {dailyLimitUsd ? `$${dailyLimitUsd}/day` : <span className="text-outline">{t('policy.unlimited')}</span>}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-outline">{t('policy.enabled')}</dt>
-                    <dd className={`font-medium ${enabled ? 'text-primary' : 'text-outline'}`}>
-                      {enabled ? t('policy.enabled') : t('policy.disabled')}
                     </dd>
                   </div>
                 </dl>

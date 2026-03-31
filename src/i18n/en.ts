@@ -144,7 +144,7 @@ const en: Record<string, string> = {
   'policy.spendTitle': 'Spend Policy',
   'policy.spendSubtitle': 'Transaction limits and approval rules',
   'policy.loading': 'Loading policy…',
-  'policy.maxAmount': 'Max amount',
+  'policy.maxAmount': 'Per-tx limit',
   'policy.maxTransactionAmount': 'Max transaction amount',
   'policy.maxTransactionDesc': 'Hard cap for a single transaction. Leave blank to allow any amount.',
   'policy.noLimit': 'No limit',
