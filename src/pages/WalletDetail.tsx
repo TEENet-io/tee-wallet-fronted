@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react';
 import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, Pencil, X, Trash2 } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useConfirm } from '../components/ConfirmDialog';
@@ -74,13 +74,15 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const chainLabel = wallet ? (chainsMap[wallet.chain]?.label ?? wallet.chain) : '';
   const balance = wallet ? balances[wallet.id] : undefined;
 
-  // Fetch daily spend on mount
-  useEffect(() => {
+  // Fetch daily spend
+  const refreshDailySpent = useCallback(() => {
     if (!walletId) return;
     api<DailySpent>(`/api/wallets/${walletId}/daily-spent`).then(res => {
       if (res.daily_spent_usd !== undefined) setDailySpent(res);
     });
   }, [walletId]);
+
+  useEffect(() => { refreshDailySpent(); }, [refreshDailySpent]);
 
   // Fetch USD price
   useEffect(() => {
@@ -361,7 +363,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
 
       {/* Tab content */}
       <div className="animate-in fade-in duration-200" key={activeTab}>
-        {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} dailySpent={dailySpent} />}
+        {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} dailySpent={dailySpent} onPolicyChange={refreshDailySpent} />}
         {activeTab === 'program' && <ProgramPanel walletId={wallet.id} chainFamily={family} chainName={wallet.chain} />}
       </div>
 

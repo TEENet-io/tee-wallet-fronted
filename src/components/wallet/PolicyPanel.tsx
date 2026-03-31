@@ -77,7 +77,7 @@ function HeaderGauge({ spent }: { spent: DailySpent }) {
   );
 }
 
-export default function PolicyPanel({ walletId, dailySpent }: { walletId: string; dailySpent?: DailySpent | null }) {
+export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { walletId: string; dailySpent?: DailySpent | null; onPolicyChange?: () => void }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const { getFreshPasskeyCredential } = useAuth();
@@ -157,6 +157,7 @@ export default function PolicyPanel({ walletId, dailySpent }: { walletId: string
 
       if (res.success) {
         toast(t('policy.savedSuccess'), 'success');
+        onPolicyChange?.();
       } else {
         toast((res as { error?: string }).error ?? t('policy.saveFail'), 'error');
       }
@@ -186,12 +187,12 @@ export default function PolicyPanel({ walletId, dailySpent }: { walletId: string
 
       if (res.success) {
         toast(t('policy.deleteSuccess'), 'success');
-        // Reset all form fields
         setThresholdUsd('');
         setDailyLimitUsd('');
         setSliderValue(0);
         setEnabled(true);
         setLoaded(false);
+        onPolicyChange?.();
       } else {
         toast((res as { error?: string }).error ?? t('policy.saveFail'), 'error');
       }
