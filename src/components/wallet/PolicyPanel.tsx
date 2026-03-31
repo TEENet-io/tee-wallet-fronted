@@ -281,34 +281,32 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
                 </div>
               </div>
 
-              <input
-                type="number"
-                min="0"
-                step="any"
-                value={thresholdUsd}
-                onChange={handleThresholdInput}
-                placeholder="100"
-                className="w-full bg-surface-container border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors mt-1"
-              />
-            </div>
-
-            {/* Daily Limit USD (optional) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-on-surface">
-                {t('policy.maxAmount')} (USD / {t('history.action.transfer') || 'day'})
-              </label>
-              <p className="text-xs text-on-surface-variant">
-                {t('policy.maxTransactionDesc')}
-              </p>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                value={dailyLimitUsd}
-                onChange={e => setDailyLimitUsd(e.target.value)}
-                placeholder={t('policy.noLimit')}
-                className="w-full bg-surface-container border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                <div>
+                  <label className="text-[10px] text-on-surface-variant uppercase tracking-wider mb-1 block">{t('policy.threshold')} (USD)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={thresholdUsd}
+                    onChange={handleThresholdInput}
+                    placeholder="100"
+                    className="w-full bg-surface-container border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-on-surface-variant uppercase tracking-wider mb-1 block">{t('policy.maxAmount')} (USD)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={dailyLimitUsd}
+                    onChange={e => setDailyLimitUsd(e.target.value)}
+                    placeholder={t('policy.noLimit')}
+                    className="w-full bg-surface-container border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Summary */}
