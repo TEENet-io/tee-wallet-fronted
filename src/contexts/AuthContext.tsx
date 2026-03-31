@@ -94,8 +94,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (!beginRes.success) { toast(beginRes.error || 'Failed to start registration', 'error'); return false; }
 
-      // Step 2: prompt passkey creation - old code: normalizeOptions(beginRes.options)
-      const credential = await navigator.credentials.create(normalizeOptions(beginRes.options));
+      // Step 2: detect platform authenticator, then set authenticatorAttachment accordingly
+      // If device has biometric (Touch ID / Face ID), prefer local; otherwise allow cross-platform (QR code)
+      const hasPlatform = typeof PublicKeyCredential !== 'undefined'
+        && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable
+        ? await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+        : false;
+      const opts = normalizeOptions(beginRes.options);
+      if (opts?.publicKey?.authenticatorSelection) {
+        opts.publicKey.authenticatorSelection.authenticatorAttachment = hasPlatform ? 'platform' : 'cross-platform';
+      }
+
+      const credential = await navigator.credentials.create(opts);
       if (!credential) { toast('Registration cancelled', 'error'); return false; }
       const credJSON = credentialToJSON(credential);
 
