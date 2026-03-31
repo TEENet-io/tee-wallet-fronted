@@ -214,7 +214,30 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
               <p className="text-xs text-on-surface-variant">{t('policy.spendSubtitle')}</p>
             </div>
           </div>
-          {dailySpent && <HeaderGauge spent={dailySpent} />}
+          <div className="flex items-center gap-4 shrink-0">
+            {/* Enabled toggle */}
+            {!loading && (
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium ${enabled ? 'text-primary' : 'text-outline'}`}>
+                  {enabled ? t('policy.enabled') : t('policy.disabled')}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={enabled}
+                  onClick={() => setEnabled(v => !v)}
+                  className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    enabled ? 'bg-primary' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                    enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              </div>
+            )}
+            {dailySpent && <HeaderGauge spent={dailySpent} />}
+          </div>
         </div>
 
         {loading ? (
@@ -286,27 +309,6 @@ export default function PolicyPanel({ walletId, dailySpent, onPolicyChange }: { 
                 placeholder={t('policy.noLimit')}
                 className="w-full bg-surface-container border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
               />
-            </div>
-
-            {/* Enabled toggle */}
-            <div className="flex items-center justify-between bg-surface-container rounded-xl border border-outline-variant/10 px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-on-surface">{t('policy.enabled')}</p>
-                <p className="text-xs text-on-surface-variant">{t('policy.enabledDesc')}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={enabled}
-                onClick={() => setEnabled(v => !v)}
-                className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  enabled ? 'bg-primary' : 'bg-surface-container-highest'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                  enabled ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
             </div>
 
             {/* Summary */}
