@@ -96,6 +96,17 @@ export interface APIKey {
   status?: 'active' | 'revoked';
 }
 
+export interface AddressBookEntry {
+  id: number;
+  user_id: number;
+  nickname: string;
+  chain: string;
+  address: string;
+  memo?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   error?: string;

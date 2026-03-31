@@ -55,9 +55,10 @@ interface InviteResult {
 
 interface SecuritySettingsProps {
   onNavigateHome: () => void;
+  onAddressBook?: () => void;
 }
 
-export default function SecuritySettings({ onNavigateHome }: SecuritySettingsProps) {
+export default function SecuritySettings({ onNavigateHome, onAddressBook }: SecuritySettingsProps) {
   const auth = useAuth();
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -403,6 +404,23 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         <div>
           <h1 className="text-xl font-semibold text-on-surface">{t('settings.title')}</h1>
         </div>
+
+        {/* Address Book shortcut */}
+        {onAddressBook && (
+          <button
+            onClick={onAddressBook}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low ghost-border hover:border-outline/40 transition-all text-left group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Link2 className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-on-surface text-sm">{t('addressBook.title')}</p>
+              <p className="text-xs text-on-surface-variant">{t('addressBook.subtitle')}</p>
+            </div>
+            <ChevronDown className="w-4 h-4 text-outline -rotate-90 group-hover:text-primary transition-colors shrink-0" />
+          </button>
+        )}
 
         {/* One-time new key banner */}
         {newKey && (

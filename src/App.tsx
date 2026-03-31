@@ -9,6 +9,7 @@ import WalletDetail from './pages/WalletDetail';
 import ApprovalList from './pages/ApprovalList';
 import ApprovalDetail from './components/ApprovalDetail';
 import SecuritySettings from './components/SecuritySettings';
+import AddressBook from './components/AddressBook';
 import AuditHistory from './pages/AuditHistory';
 
 type View =
@@ -18,6 +19,7 @@ type View =
   | { page: 'approvals' }
   | { page: 'approval-detail'; approvalId: string }
   | { page: 'settings' }
+  | { page: 'address-book' }
   | { page: 'history' };
 
 function viewFromHash(): View | null {
@@ -63,6 +65,7 @@ export default function App() {
     approvals: () => setViewWithHash({ page: 'approvals' }),
     approvalDetail: (id: string) => setViewWithHash({ page: 'approval-detail', approvalId: id }),
     settings: () => setViewWithHash({ page: 'settings' }),
+    addressBook: () => setViewWithHash({ page: 'address-book' }),
     history: () => setViewWithHash({ page: 'history' }),
   };
 
@@ -83,7 +86,10 @@ export default function App() {
       content = <ApprovalDetail approvalId={view.approvalId} onBack={nav.approvals} />;
       break;
     case 'settings':
-      content = <SecuritySettings onNavigateHome={nav.wallets} />;
+      content = <SecuritySettings onNavigateHome={nav.wallets} onAddressBook={nav.addressBook} />;
+      break;
+    case 'address-book':
+      content = <AddressBook onBack={nav.settings} />;
       break;
     case 'history':
       content = <AuditHistory />;
