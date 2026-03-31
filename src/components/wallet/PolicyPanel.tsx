@@ -34,6 +34,18 @@ function HeaderGauge({ spent }: { spent: DailySpent }) {
   const arcColor = isExceeded ? '#f87171' : isHigh ? '#fb923c' : '#7c3aed';
   const glowColor = isExceeded ? 'rgba(248,113,113,0.5)' : isHigh ? 'rgba(251,146,60,0.4)' : 'rgba(124,58,237,0.35)';
 
+  // No limit → just show spent amount, no gauge
+  if (!hasLimit) {
+    return (
+      <div className="text-right">
+        <p className="text-xs text-on-surface-variant uppercase tracking-wider">{t('wallet.dailySpend')}</p>
+        <p className="text-base font-headline font-black tabular-nums text-on-surface">
+          ${spentNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-3">
       {/* Mini gauge — fuel style: full on right, empty on left */}
@@ -45,14 +57,14 @@ function HeaderGauge({ spent }: { spent: DailySpent }) {
               fill="none" stroke="currentColor" className="text-surface-container-high"
               strokeWidth={STROKE} strokeLinecap="round" />
             {/* Filled arc: draws from right side, shrinks as spent increases */}
-            {hasLimit && filledRemain > 0 && (
+            {filledRemain > 0 && (
               <path d={`M ${cx + R} ${cy} A ${R} ${R} 0 0 0 ${cx - R} ${cy}`}
                 fill="none" stroke={arcColor} strokeWidth={STROKE} strokeLinecap="round"
                 strokeDasharray={`${arcLen}`} strokeDashoffset={`${arcLen - filledRemain}`}
                 style={{ filter: `drop-shadow(0 0 3px ${glowColor})`, transition: 'stroke-dashoffset 0.8s ease' }} />
             )}
             {/* Needle: points to remaining level (right=full, left=empty) */}
-            {hasLimit && (() => {
+            {(() => {
               const a = Math.PI * remainPct;
               const nx = cx + (R - 10) * Math.cos(a);
               const ny = cy - (R - 10) * Math.sin(a);
@@ -61,7 +73,6 @@ function HeaderGauge({ spent }: { spent: DailySpent }) {
                 <circle cx={cx} cy={cy} r="2" fill={arcColor} />
               </>;
             })()}
-            {!hasLimit && <circle cx={cx} cy={cy} r="2" fill="currentColor" className="text-outline" />}
           </svg>
         </div>
       </div>
@@ -69,13 +80,11 @@ function HeaderGauge({ spent }: { spent: DailySpent }) {
       <div className="text-right">
         <p className={`text-base font-headline font-black tabular-nums ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface'}`}>
           ${spentNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          {hasLimit && <span className="text-xs font-bold text-on-surface-variant"> / ${limitNum.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+          <span className="text-xs font-bold text-on-surface-variant"> / ${limitNum.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
         </p>
-        {hasLimit && (
-          <p className={`text-[10px] font-medium ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
-            {isExceeded ? t('wallet.limitExceeded') : `$${remainNum.toFixed(2)} ${t('wallet.remaining')}`}
-          </p>
-        )}
+        <p className={`text-[10px] font-medium ${isExceeded ? 'text-error' : isHigh ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+          {isExceeded ? t('wallet.limitExceeded') : `$${remainNum.toFixed(2)} ${t('wallet.remaining')}`}
+        </p>
         {resetTime && <p className="text-[9px] text-outline">{t('wallet.resets')} {resetTime}</p>}
       </div>
     </div>
