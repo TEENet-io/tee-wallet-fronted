@@ -3,7 +3,7 @@ import {
   Terminal, Bot, KeyRound, Radio, Ban,
   LogOut, Trash2, Fingerprint, Copy, Check,
   Link2, ChevronDown, ChevronUp, Plus, X,
-  UserPlus, Pencil,
+  UserPlus, Pencil, BookUser, Search, Loader2,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +11,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from './ConfirmDialog';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useWallets } from '../contexts/WalletContext';
-import type { APIKey, ChainConfig } from '../types';
+import type { APIKey, ChainConfig, AddressBookEntry } from '../types';
 
 // Maps a key index to one of the decorative icons used in the original design.
 const KEY_ICONS = [Terminal, Bot, Radio, KeyRound];
@@ -55,10 +55,9 @@ interface InviteResult {
 
 interface SecuritySettingsProps {
   onNavigateHome: () => void;
-  onAddressBook?: () => void;
 }
 
-export default function SecuritySettings({ onNavigateHome, onAddressBook }: SecuritySettingsProps) {
+export default function SecuritySettings({ onNavigateHome }: SecuritySettingsProps) {
   const auth = useAuth();
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -99,6 +98,23 @@ export default function SecuritySettings({ onNavigateHome, onAddressBook }: Secu
   );
 
   // ---------------------------------------------------------------------------
+  // Address Book state
+  // ---------------------------------------------------------------------------
+  const [abEntries, setAbEntries] = useState<AddressBookEntry[]>([]);
+  const [abLoading, setAbLoading] = useState(true);
+  const [abSearch, setAbSearch] = useState('');
+  const [showAbForm, setShowAbForm] = useState(false);
+  const [abEditId, setAbEditId] = useState<number | null>(null);
+  const [abNickname, setAbNickname] = useState('');
+  const [abChain, setAbChain] = useState('');
+  const [abAddress, setAbAddress] = useState('');
+  const [abMemo, setAbMemo] = useState('');
+  const [abSaving, setAbSaving] = useState(false);
+  const [abDeletingId, setAbDeletingId] = useState<number | null>(null);
+
+  const chainNames = Object.keys(chainsMap);
+
+  // ---------------------------------------------------------------------------
   // Invite User state
   // ---------------------------------------------------------------------------
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -108,6 +124,89 @@ export default function SecuritySettings({ onNavigateHome, onAddressBook }: Secu
   const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
   const [copiedInviteUrl, setCopiedInviteUrl] = useState(false);
   const [copiedInviteToken, setCopiedInviteToken] = useState(false);
+
+  // ---------------------------------------------------------------------------
+  // Address Book handlers
+  // ---------------------------------------------------------------------------
+  const loadAbEntries = useCallback(async () => {
+    setAbLoading(true);
+    const res = await api<{ entries: AddressBookEntry[] }>('/api/addressbook');
+    if (res.success && Array.isArray(res.entries)) setAbEntries(res.entries);
+    setAbLoading(false);
+  }, []);
+
+  useEffect(() => { loadAbEntries(); }, [loadAbEntries]);
+
+  function openAbAdd() {
+    setAbEditId(null);
+    setAbNickname('');
+    setAbChain(chainNames[0] ?? '');
+    setAbAddress('');
+    setAbMemo('');
+    setShowAbForm(true);
+  }
+
+  function openAbEdit(entry: AddressBookEntry) {
+    setAbEditId(entry.id);
+    setAbNickname(entry.nickname);
+    setAbChain(entry.chain);
+    setAbAddress(entry.address);
+    setAbMemo(entry.memo ?? '');
+    setShowAbForm(true);
+  }
+
+  async function handleAbSave(e: FormEvent) {
+    e.preventDefault();
+    if (!abNickname.trim() || !abAddress.trim() || (!abEditId && !abChain)) return;
+    setAbSaving(true);
+    try {
+      const passkeyBody = await auth.getFreshPasskeyCredential();
+      if (!passkeyBody) { setAbSaving(false); return; }
+      const isEdit = abEditId !== null;
+      const body: Record<string, unknown> = {
+        ...passkeyBody,
+        nickname: abNickname.trim().toLowerCase(),
+        address: abAddress.trim(),
+        memo: abMemo.trim() || undefined,
+      };
+      if (!isEdit) body.chain = abChain;
+      const res = await api(isEdit ? `/api/addressbook/${abEditId}` : '/api/addressbook', {
+        method: isEdit ? 'PUT' : 'POST',
+        body: JSON.stringify(body),
+      });
+      if (res.success) {
+        toast(isEdit ? t('addressBook.updated') : t('addressBook.saved'), 'success');
+        setShowAbForm(false);
+        await loadAbEntries();
+      } else {
+        toast((res as { error?: string }).error ?? t('addressBook.saveFail'), 'error');
+      }
+    } finally { setAbSaving(false); }
+  }
+
+  async function handleAbDelete(entry: AddressBookEntry) {
+    const ok = await confirm({
+      title: t('addressBook.delete'),
+      message: `${t('addressBook.confirmDelete')}\n\n${entry.nickname} (${entry.chain})`,
+      confirmText: t('addressBook.delete'),
+      danger: true,
+    });
+    if (!ok) return;
+    setAbDeletingId(entry.id);
+    try {
+      const passkeyBody = await auth.getFreshPasskeyCredential();
+      if (!passkeyBody) { setAbDeletingId(null); return; }
+      const res = await api(`/api/addressbook/${entry.id}`, { method: 'DELETE', body: JSON.stringify(passkeyBody) });
+      if (res.success) {
+        toast(t('addressBook.deleted'), 'success');
+        setAbEntries(prev => prev.filter(e => e.id !== entry.id));
+      } else {
+        toast((res as { error?: string }).error ?? t('addressBook.deleteFail'), 'error');
+      }
+    } finally { setAbDeletingId(null); }
+  }
+
+  const abFiltered = abSearch ? abEntries.filter(e => e.nickname.includes(abSearch.toLowerCase())) : abEntries;
 
   // ---------------------------------------------------------------------------
   // Load API keys on mount
@@ -405,23 +504,6 @@ export default function SecuritySettings({ onNavigateHome, onAddressBook }: Secu
           <h1 className="text-xl font-semibold text-on-surface">{t('settings.title')}</h1>
         </div>
 
-        {/* Address Book shortcut */}
-        {onAddressBook && (
-          <button
-            onClick={onAddressBook}
-            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low ghost-border hover:border-outline/40 transition-all text-left group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Link2 className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-on-surface text-sm">{t('addressBook.title')}</p>
-              <p className="text-xs text-on-surface-variant">{t('addressBook.subtitle')}</p>
-            </div>
-            <ChevronDown className="w-4 h-4 text-outline -rotate-90 group-hover:text-primary transition-colors shrink-0" />
-          </button>
-        )}
-
         {/* One-time new key banner */}
         {newKey && (
           <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-secondary/10 border border-secondary/30">
@@ -585,6 +667,120 @@ export default function SecuritySettings({ onNavigateHome, onAddressBook }: Secu
               })
             )}
           </div>
+        </section>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* Address Book Section                                                */}
+        {/* ------------------------------------------------------------------ */}
+        <section className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-headline font-semibold text-on-surface">
+                {t('addressBook.title')}
+              </h2>
+              <p className="text-sm text-slate-500">{t('addressBook.subtitle')}</p>
+            </div>
+            <button
+              onClick={() => { showAbForm ? setShowAbForm(false) : openAbAdd(); }}
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-container-high text-on-surface text-sm font-semibold hover:bg-surface-container transition-colors"
+            >
+              {showAbForm ? (
+                <><ChevronUp className="w-4 h-4" />{t('common.cancel')}</>
+              ) : (
+                <><Plus className="w-4 h-4" />{t('addressBook.add')}</>
+              )}
+            </button>
+          </div>
+
+          {/* Add/Edit form */}
+          {showAbForm && (
+            <form onSubmit={handleAbSave} className="p-5 rounded-2xl bg-surface-container-low ghost-border space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t('addressBook.nickname')}</label>
+                  <input required value={abNickname} onChange={e => setAbNickname(e.target.value)} placeholder={t('addressBook.nicknamePlaceholder')}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface placeholder:text-slate-600 border border-transparent focus:border-primary/40 focus:outline-none transition-colors" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t('addressBook.chain')}</label>
+                  <select value={abChain} onChange={e => setAbChain(e.target.value)} disabled={abEditId !== null}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface border border-transparent focus:border-primary/40 focus:outline-none transition-colors disabled:opacity-50">
+                    {chainNames.map(name => <option key={name} value={name}>{chainsMap[name]?.label ?? name}</option>)}
+                  </select>
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t('addressBook.address')}</label>
+                  <input required value={abAddress} onChange={e => setAbAddress(e.target.value)} placeholder={t('addressBook.addressPlaceholder')}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface font-mono placeholder:text-slate-600 border border-transparent focus:border-primary/40 focus:outline-none transition-colors" />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t('addressBook.memo')}</label>
+                  <input value={abMemo} onChange={e => setAbMemo(e.target.value)} placeholder={t('addressBook.memoPlaceholder')}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface placeholder:text-slate-600 border border-transparent focus:border-primary/40 focus:outline-none transition-colors" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-1">
+                <button type="button" onClick={() => setShowAbForm(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-on-surface transition-colors">
+                  {t('common.cancel')}
+                </button>
+                <button type="submit" disabled={abSaving}
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl primary-gradient text-on-primary-container text-sm font-semibold glow-primary hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100">
+                  <Fingerprint className="w-4 h-4" />
+                  {abSaving ? t('settings.verifying') : t('addressBook.save')}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Search */}
+          {abEntries.length > 3 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+              <input type="text" value={abSearch} onChange={e => setAbSearch(e.target.value)} placeholder={t('addressBook.search')}
+                className="w-full pl-9 pr-4 py-2 bg-surface-container border border-outline-variant/20 rounded-xl text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors" />
+            </div>
+          )}
+
+          {/* List */}
+          {abLoading ? (
+            <div className="flex items-center justify-center py-8 text-on-surface-variant">
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </div>
+          ) : abFiltered.length === 0 ? (
+            <p className="py-8 text-center text-slate-500 text-sm">{t('addressBook.empty')}</p>
+          ) : (
+            <div className="space-y-3">
+              {abFiltered.map(entry => (
+                <div key={entry.id} className="flex items-center justify-between gap-4 px-5 py-4 rounded-2xl bg-surface-container-low ghost-border hover:bg-surface-container transition-colors group">
+                  <div className="flex items-start gap-4 min-w-0">
+                    <div className="p-2.5 rounded-xl bg-primary/10 flex-shrink-0">
+                      <BookUser className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-on-surface">{entry.nickname}</span>
+                        <span className="text-xs text-slate-500 bg-surface-container-high px-1.5 py-0.5 rounded">
+                          {chainsMap[entry.chain]?.label ?? entry.chain}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono truncate">{entry.address}</p>
+                      {entry.memo && <p className="text-xs text-outline truncate">{entry.memo}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => openAbEdit(entry)} title={t('addressBook.edit')}
+                      className="p-2 text-slate-500 hover:text-primary transition-colors">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => handleAbDelete(entry)} disabled={abDeletingId === entry.id} title={t('addressBook.delete')}
+                      className="p-2 text-slate-500 hover:text-error transition-colors disabled:opacity-40">
+                      {abDeletingId === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* ------------------------------------------------------------------ */}
