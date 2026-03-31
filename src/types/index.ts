@@ -85,7 +85,7 @@ export interface AuditLog {
   auth_mode?: string;
   status?: string;
   wallet_id?: string;
-  ip?: string;
+  api_key_prefix?: string;
   created_at: string;
   approved_at?: string;
 }

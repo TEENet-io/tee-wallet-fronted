@@ -40,6 +40,13 @@ function dotColor(action: string): string {
   return 'bg-on-surface-variant';
 }
 
+// Format a value for display — handles objects/arrays instead of showing [object Object]
+function formatValue(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
 // Parse JSON details into a summary string
 function detailSummary(details?: string): string | null {
   if (!details) return null;
@@ -47,12 +54,11 @@ function detailSummary(details?: string): string | null {
     const obj = JSON.parse(details);
     const entries = Object.entries(obj);
     if (entries.length === 0) return null;
-    // Pick the most useful field
-    const priority = ['label', 'chain', 'address', 'prefix', 'amount', 'contract_address'];
+    const priority = ['label', 'chain', 'address', 'prefix', 'amount', 'contract_address', 'to', 'nickname'];
     for (const key of priority) {
-      if (obj[key]) return `${key}: ${String(obj[key])}`;
+      if (obj[key] !== undefined && obj[key] !== '') return `${key}: ${formatValue(obj[key])}`;
     }
-    return `${entries[0][0]}: ${String(entries[0][1])}`;
+    return `${entries[0][0]}: ${formatValue(entries[0][1])}`;
   } catch {
     return details.length > 60 ? details.slice(0, 60) + '…' : details;
   }
@@ -197,10 +203,14 @@ export default function AuditHistory() {
                 {dateLogs.map(log => {
                   const isExpanded = expandedId === String(log.id);
                   const summary = detailSummary(log.details);
-                  let fullDetails: [string, unknown][] = [];
-                  if (isExpanded && log.details) {
-                    try { fullDetails = Object.entries(JSON.parse(log.details)); } catch { /* skip */ }
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  let detailsObj: Record<string, any> = {};
+                  if (log.details) {
+                    try { detailsObj = JSON.parse(log.details); } catch { /* skip */ }
                   }
+                  const fullDetails = Object.entries(detailsObj);
+                  const hasApproval = !!log.approved_at;
+                  const dailyLimit = detailsObj.daily_limit_usd;
 
                   return (
                     <button
@@ -220,8 +230,31 @@ export default function AuditHistory() {
                           <span className="text-sm font-medium text-on-surface capitalize">
                             {getActionLabel(log.action)}
                           </span>
-                          {log.status && log.status !== 'success' && (
+                          {/* Approve / Auto badge */}
+                          {log.status === 'success' && (
+                            hasApproval ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">approve</span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">auto</span>
+                            )
+                          )}
+                          {log.status && log.status !== 'success' && log.status !== 'pending' && (
                             <span className="text-[10px] font-bold text-error uppercase">{log.status}</span>
+                          )}
+                          {log.status === 'pending' && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">pending</span>
+                          )}
+                          {/* API key prefix */}
+                          {log.api_key_prefix && (
+                            <span className="text-[10px] font-mono text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20">
+                              {log.api_key_prefix}
+                            </span>
+                          )}
+                          {/* Daily limit */}
+                          {dailyLimit && (
+                            <span className="text-[10px] text-on-surface-variant">
+                              limit: ${dailyLimit}
+                            </span>
                           )}
                           <span className="ml-auto flex items-center gap-2 text-[11px] text-on-surface-variant tabular-nums whitespace-nowrap">
                             {new Date(log.created_at).toLocaleTimeString(undefined, {
@@ -246,7 +279,7 @@ export default function AuditHistory() {
                             {fullDetails.map(([k, v]) => (
                               <div key={k} className="flex gap-2 text-xs">
                                 <span className="text-on-surface-variant shrink-0 w-24 text-right">{k}</span>
-                                <span className="text-on-surface font-mono break-all">{String(v)}</span>
+                                <span className="text-on-surface font-mono break-all">{formatValue(v)}</span>
                               </div>
                             ))}
                             {log.approved_at && (
@@ -261,10 +294,10 @@ export default function AuditHistory() {
                                 <span className="text-on-surface font-mono">{log.auth_mode}</span>
                               </div>
                             )}
-                            {log.ip && (
+                            {log.api_key_prefix && (
                               <div className="flex gap-2 text-xs">
-                                <span className="text-on-surface-variant shrink-0 w-24 text-right">ip</span>
-                                <span className="text-on-surface font-mono break-all">{log.ip}</span>
+                                <span className="text-on-surface-variant shrink-0 w-24 text-right">api key</span>
+                                <span className="text-on-surface font-mono">{log.api_key_prefix}</span>
                               </div>
                             )}
                           </div>
