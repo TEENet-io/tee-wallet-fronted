@@ -318,7 +318,12 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
     if (!approvalId || !approval || approval.status !== 'pending') return;
     setRejecting(true);
     try {
-      const res = await api(`/api/approvals/${approvalId}/reject`, { method: 'POST' });
+      const passkeyBody = await getFreshPasskeyCredential();
+      if (!passkeyBody) { setRejecting(false); return; }
+      const res = await api(`/api/approvals/${approvalId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify(passkeyBody),
+      });
       if (res.success) {
         toast(t('approval.rejectSuccess'), 'info');
         onBack();
