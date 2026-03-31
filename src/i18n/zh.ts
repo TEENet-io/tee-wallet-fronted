@@ -6,10 +6,10 @@ const zh: Record<string, string> = {
   'nav.settings': '设置',
 
   // Onboarding
-  'onboarding.title': 'TWallet',
+  'onboarding.title': 'TEENet Wallet',
   'onboarding.titleAccent': '',
   'onboarding.subtitle': '由 TEE 硬件驱动的安全多链钱包。TEENet 维护。',
-  'onboarding.appName': 'TWallet',
+  'onboarding.appName': 'TEENet Wallet',
   'onboarding.appTagline': '安全。隐私。由 TEENet 维护。',
   'onboarding.nameLabel': '您的姓名或邮箱',
   'onboarding.registerPasskey': '使用 Passkey 注册',
@@ -17,7 +17,7 @@ const zh: Record<string, string> = {
   'onboarding.or': '或',
   'onboarding.securedBy': '由 TEENet 提供支持',
   'onboarding.inviteTitle': '输入邀请码',
-  'onboarding.inviteDesc': 'TWallet 目前处于内测阶段。',
+  'onboarding.inviteDesc': 'TEENet Wallet 目前处于内测阶段。',
   'onboarding.invitePlaceholder': 'CLAW-XXXX-XXXX',
   'onboarding.claimTitle': '认领身份',
   'onboarding.claimDesc': '选择您的唯一代理名称。',

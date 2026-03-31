@@ -6,10 +6,10 @@ const en: Record<string, string> = {
   'nav.settings': 'Settings',
 
   // Onboarding
-  'onboarding.title': 'TWallet',
+  'onboarding.title': 'TEENet Wallet',
   'onboarding.titleAccent': '',
   'onboarding.subtitle': 'Secure multi-chain wallet powered by TEE hardware. Maintained by TEENet.',
-  'onboarding.appName': 'TWallet',
+  'onboarding.appName': 'TEENet Wallet',
   'onboarding.appTagline': 'Secure. Private. Maintained by TEENet.',
   'onboarding.nameLabel': 'Your name or email',
   'onboarding.registerPasskey': 'Register with Passkey',
@@ -17,7 +17,7 @@ const en: Record<string, string> = {
   'onboarding.or': 'or',
   'onboarding.securedBy': 'Powered by TEENet',
   'onboarding.inviteTitle': 'Enter Invite Code',
-  'onboarding.inviteDesc': 'TWallet is currently in private beta.',
+  'onboarding.inviteDesc': 'TEENet Wallet is currently in private beta.',
   'onboarding.invitePlaceholder': 'CLAW-XXXX-XXXX',
   'onboarding.claimTitle': 'Claim Identity',
   'onboarding.claimDesc': 'Choose your unique agent handle.',
