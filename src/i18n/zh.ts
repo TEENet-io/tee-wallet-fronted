@@ -144,7 +144,7 @@ const zh: Record<string, string> = {
   'policy.spendTitle': '支出策略',
   'policy.spendSubtitle': '交易限额与审批规则',
   'policy.loading': '加载策略中…',
-  'policy.maxAmount': '单笔上限',
+  'policy.maxAmount': '日上限',
   'policy.maxTransactionAmount': '单笔交易最大金额',
   'policy.maxTransactionDesc': '单笔交易的硬性上限。留空表示不限金额。',
   'policy.noLimit': '不限额',
