@@ -12,6 +12,7 @@ const en: Record<string, string> = {
   'onboarding.appName': 'TEENet Wallet',
   'onboarding.appTagline': 'Secure. Private. Maintained by TEENet.',
   'onboarding.nameLabel': 'Your name or email',
+  'onboarding.nameRequired': 'Please enter your name or email first',
   'onboarding.registerPasskey': 'Register with Passkey',
   'onboarding.signInPasskey': 'Sign in with Passkey',
   'onboarding.or': 'or',

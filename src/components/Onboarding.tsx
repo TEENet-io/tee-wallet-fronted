@@ -13,6 +13,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
 
   const [displayName, setDisplayName] = useState('');
   const [registered, setRegistered] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   async function handleRegister() {
     const name = displayName.trim();
@@ -45,21 +46,26 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
         {/* Register Card */}
         <div className="bg-surface-container-low rounded-2xl ghost-border p-6 space-y-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-on-surface-variant">{t('onboarding.nameLabel')}</label>
+            <label className="text-xs font-medium text-on-surface-variant">
+              {t('onboarding.nameLabel')} <span className="text-error">*</span>
+            </label>
             <input
-              className="w-full bg-surface-container border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary transition-colors placeholder:text-outline"
+              className={`w-full bg-surface-container border rounded-xl px-4 py-3 text-on-surface text-sm outline-none transition-colors placeholder:text-outline ${showHint && !displayName.trim() ? 'border-error ring-1 ring-error/30' : 'border-outline-variant/20 focus:border-primary'}`}
               placeholder="alice@example.com"
               type="text"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(e) => { setDisplayName(e.target.value); if (e.target.value.trim()) setShowHint(false); }}
               disabled={loading}
             />
+            {showHint && !displayName.trim() && (
+              <p className="text-error text-xs mt-1">{t('onboarding.nameRequired')}</p>
+            )}
           </div>
 
           <button
-            onClick={handleRegister}
-            disabled={loading || !displayName.trim()}
-            className="w-full bg-primary text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            onClick={() => { if (!displayName.trim()) { setShowHint(true); return; } handleRegister(); }}
+            disabled={loading}
+            className={`w-full font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-sm ${!displayName.trim() ? 'bg-outline/30 text-on-surface/40 cursor-not-allowed' : 'bg-primary text-white hover:opacity-90'} disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}
             {loading ? t('onboarding.activating') : t('onboarding.registerPasskey')}

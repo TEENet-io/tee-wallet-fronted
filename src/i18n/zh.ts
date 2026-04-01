@@ -12,6 +12,7 @@ const zh: Record<string, string> = {
   'onboarding.appName': 'TEENet Wallet',
   'onboarding.appTagline': '安全。隐私。由 TEENet 维护。',
   'onboarding.nameLabel': '您的姓名或邮箱',
+  'onboarding.nameRequired': '请先输入您的姓名或邮箱',
   'onboarding.registerPasskey': '使用 Passkey 注册',
   'onboarding.signInPasskey': '使用 Passkey 登录',
   'onboarding.or': '或',
