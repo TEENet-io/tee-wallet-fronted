@@ -103,6 +103,8 @@ function parseContext(approval: Approval) {
   else if (ctx.type === 'revoke_approval' || ctx.action === 'revoke_approval') typeLabel = 'Revoke Approval';
   else if (isPolicyChange) typeLabel = 'Policy Change';
   else if (isContractAdd) typeLabel = at === 'contract_update' ? 'Whitelist Update' : 'Whitelist Add';
+  else if (at === 'addressbook_add') typeLabel = 'Address Book Add';
+  else if (at === 'addressbook_update') typeLabel = 'Address Book Update';
   else if (at === 'sign') typeLabel = 'Sign';
   else if (at === 'contract_call') typeLabel = 'Contract Call';
   else if (at === 'transfer') typeLabel = 'Transfer';
@@ -120,6 +122,10 @@ function parseContext(approval: Approval) {
     const addr = pol.contract_address || '';
     summary = pol.label || (addr ? `${addr.slice(0, 8)}…${addr.slice(-4)}` : '');
     if (pol.symbol) summary += ` (${pol.symbol})`;
+  } else if (at === 'addressbook_add' || at === 'addressbook_update') {
+    summary = pol.nickname || '';
+    if (pol.chain) summary += summary ? ` · ${pol.chain}` : pol.chain;
+    if (pol.address) summary += summary ? ` · ${pol.address.slice(0, 8)}…${pol.address.slice(-4)}` : pol.address;
   } else {
     const to = ctx.to || approval.to_address;
     const contract = ctx.contract || ctx.program_id;

@@ -231,7 +231,7 @@ export default function AuditHistory() {
                             {getActionLabel(log.action)}
                           </span>
                           {/* Approve / Auto badge — only for actions that can go through approval */}
-                          {log.status === 'success' && ['transfer', 'sign', 'contract_call', 'contract_add', 'contract_update', 'approve_token', 'revoke_approval'].includes(log.action) && (
+                          {log.status === 'success' && ['transfer', 'sign', 'contract_call', 'contract_add', 'contract_update', 'approve_token', 'revoke_approval', 'addressbook_add', 'addressbook_update'].includes(log.action) && (
                             hasApproval ? (
                               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">approve</span>
                             ) : (

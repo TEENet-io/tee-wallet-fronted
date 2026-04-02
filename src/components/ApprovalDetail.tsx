@@ -100,6 +100,7 @@ function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => st
   const approvalType = approval.approval_type ?? '';
   const isPolicyChange = approvalType === 'policy_change';
   const isContractAdd = approvalType === 'contract_add' || approvalType === 'contract_update';
+  const isAddressBook = approvalType === 'addressbook_add' || approvalType === 'addressbook_update';
 
   // Type badge label
   let typeLabel = (approval.action ?? '').replace(/_/g, ' ');
@@ -110,6 +111,7 @@ function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => st
   else if (ctx.type === 'revoke_approval' || ctx.action === 'revoke_approval') typeLabel = 'Revoke Approval';
   else if (isPolicyChange) typeLabel = 'Policy Change';
   else if (isContractAdd) typeLabel = approvalType === 'contract_update' ? 'Whitelist Update' : 'Whitelist Add';
+  else if (isAddressBook) typeLabel = approvalType === 'addressbook_update' ? 'Address Book Update' : 'Address Book Add';
   else if (approvalType === 'sign') typeLabel = 'Sign Message';
   else if (approvalType === 'contract_call') typeLabel = 'Contract Call';
 
@@ -150,24 +152,30 @@ function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => st
       {isContractAdd && pol.decimals !== undefined && <Row icon={Info} label="Decimals" value={String(pol.decimals)} />}
       {isContractAdd && pol.allowed_methods && <Row icon={Info} label="Allowed Methods" value={pol.allowed_methods} />}
 
+      {/* Address book add/update */}
+      {isAddressBook && pol.nickname && <Row icon={Info} label="Nickname" value={pol.nickname} />}
+      {isAddressBook && pol.chain && <Row icon={Info} label="Chain" value={pol.chain} />}
+      {isAddressBook && pol.address && <Row icon={Key} label="Address" value={pol.address} mono />}
+      {isAddressBook && pol.memo && <Row icon={Info} label="Memo" value={pol.memo} />}
+
       {/* Transaction context */}
-      {!isPolicyChange && !isContractAdd && (ctx.amount || approval.amount) && <Row icon={Zap} label="Amount" value={`${ctx.amount || approval.amount}${ctx.currency || ctx.symbol || approval.currency ? ` ${ctx.currency || ctx.symbol || approval.currency}` : ''}`} />}
-      {!isPolicyChange && !isContractAdd && ctx.from && <Row icon={Key} label="From" value={ctx.from} mono />}
-      {!isPolicyChange && !isContractAdd && (ctx.to || approval.to_address) && <Row icon={Key} label="To" value={ctx.to || approval.to_address} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.contract && <Row icon={Key} label={ctx.type === 'approve_token' || ctx.type === 'revoke_approval' ? 'Token Contract' : 'Contract'} value={ctx.contract} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.mint && <Row icon={Key} label="Token Mint" value={ctx.mint} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.program_id && <Row icon={Key} label="Program" value={ctx.program_id} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.method && <Row icon={Info} label="Method" value={ctx.method} />}
-      {!isPolicyChange && !isContractAdd && ctx.func_sig && <Row icon={Info} label="Function Signature" value={ctx.func_sig} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.spender && <Row icon={Key} label="Spender" value={ctx.spender} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.symbol && <Row icon={Info} label="Token" value={ctx.symbol} />}
-      {!isPolicyChange && !isContractAdd && ctx.chain && <Row icon={Info} label="Chain" value={ctx.chain} />}
-      {!isPolicyChange && !isContractAdd && ctx.value_eth && <Row icon={Zap} label="ETH Value" value={`${ctx.value_eth} ETH`} />}
-      {!isPolicyChange && !isContractAdd && ctx.args && <Row icon={Info} label="Arguments" value={JSON.stringify(ctx.args)} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.data && <Row icon={Info} label="Data" value={ctx.data} mono />}
-      {!isPolicyChange && !isContractAdd && ctx.accounts && <Row icon={Info} label="Accounts" value={Array.isArray(ctx.accounts) ? `${ctx.accounts.length} account(s)` : ctx.accounts} />}
-      {!isPolicyChange && !isContractAdd && (ctx.memo || approval.memo) && <Row icon={Info} label="Memo" value={ctx.memo || approval.memo} />}
-      {!isPolicyChange && !isContractAdd && ctx.approval_reason && <Row icon={AlertTriangle} label="Reason" value={ctx.approval_reason} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && (ctx.amount || approval.amount) && <Row icon={Zap} label="Amount" value={`${ctx.amount || approval.amount}${ctx.currency || ctx.symbol || approval.currency ? ` ${ctx.currency || ctx.symbol || approval.currency}` : ''}`} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.from && <Row icon={Key} label="From" value={ctx.from} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && (ctx.to || approval.to_address) && <Row icon={Key} label="To" value={ctx.to || approval.to_address} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.contract && <Row icon={Key} label={ctx.type === 'approve_token' || ctx.type === 'revoke_approval' ? 'Token Contract' : 'Contract'} value={ctx.contract} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.mint && <Row icon={Key} label="Token Mint" value={ctx.mint} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.program_id && <Row icon={Key} label="Program" value={ctx.program_id} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.method && <Row icon={Info} label="Method" value={ctx.method} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.func_sig && <Row icon={Info} label="Function Signature" value={ctx.func_sig} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.spender && <Row icon={Key} label="Spender" value={ctx.spender} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.symbol && <Row icon={Info} label="Token" value={ctx.symbol} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.chain && <Row icon={Info} label="Chain" value={ctx.chain} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.value_eth && <Row icon={Zap} label="ETH Value" value={`${ctx.value_eth} ETH`} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.args && <Row icon={Info} label="Arguments" value={JSON.stringify(ctx.args)} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.data && <Row icon={Info} label="Data" value={ctx.data} mono />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.accounts && <Row icon={Info} label="Accounts" value={Array.isArray(ctx.accounts) ? `${ctx.accounts.length} account(s)` : ctx.accounts} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && (ctx.memo || approval.memo) && <Row icon={Info} label="Memo" value={ctx.memo || approval.memo} />}
+      {!isPolicyChange && !isContractAdd && !isAddressBook && ctx.approval_reason && <Row icon={AlertTriangle} label="Reason" value={ctx.approval_reason} />}
 
       {/* Amount USD */}
       {approval.amount_usd && <Row icon={Zap} label="USD Value" value={`$${approval.amount_usd}`} />}
