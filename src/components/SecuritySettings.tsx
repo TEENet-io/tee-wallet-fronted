@@ -38,7 +38,7 @@ function timeAgo(isoDate: string): string {
 function maskKey(raw: string): string {
   if (raw.length <= 4) return raw;
   const suffix = raw.slice(-4);
-  return `oc_live_••••••••${suffix}`;
+  return `ocw_••••••••${suffix}`;
 }
 
 // Truncate long URLs for display.
