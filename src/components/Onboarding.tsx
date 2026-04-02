@@ -45,8 +45,8 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
 
         {/* Register Card */}
         <div className="bg-surface-container-low rounded-2xl ghost-border p-6 space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-on-surface-variant">
+          <div>
+            <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
               {t('onboarding.nameLabel')} <span className="text-error">*</span>
             </label>
             <input
@@ -58,7 +58,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
               disabled={loading}
             />
             {showHint && !displayName.trim() && (
-              <p className="text-error text-xs mt-1">{t('onboarding.nameRequired')}</p>
+              <p className="text-error text-xs mt-2">{t('onboarding.nameRequired')}</p>
             )}
           </div>
 
