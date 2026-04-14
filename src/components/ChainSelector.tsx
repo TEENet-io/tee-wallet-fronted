@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import type { ChainConfig } from '../types';
+import { isTestnetChain } from '../lib/chainNetwork';
 
 interface ChainSelectorProps {
   chains: Record<string, ChainConfig>;
   value: string;
   onChange: (chain: string) => void;
+  network?: 'mainnet' | 'testnet';
 }
 
-export default function ChainSelector({ chains, value, onChange }: ChainSelectorProps) {
+export default function ChainSelector({ chains, value, onChange, network }: ChainSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const ref = useRef<HTMLDivElement>(null);
@@ -21,7 +23,11 @@ export default function ChainSelector({ chains, value, onChange }: ChainSelector
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const chainList = Object.values(chains);
+  const chainList = Object.values(chains).filter(c => {
+    if (!network) return true;
+    const testnet = isTestnetChain(c);
+    return network === 'testnet' ? testnet : !testnet;
+  });
   const filtered = chainList.filter(c =>
     c.label.toLowerCase().includes(search.toLowerCase()) ||
     c.name.toLowerCase().includes(search.toLowerCase())

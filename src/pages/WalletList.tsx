@@ -1,8 +1,10 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, useMemo, type MouseEvent } from 'react';
 import { Plus, Wallet, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import ChainSelector from '../components/ChainSelector';
+import { isTestnetChain } from '../lib/chainNetwork';
+import type { ChainConfig } from '../types';
 
 function truncateAddress(address: string): string {
   if (!address || address.length <= 18) return address;
@@ -44,13 +46,33 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
   const { t } = useLanguage();
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [network, setNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
   const [selectedChain, setSelectedChain] = useState('');
   const [label, setLabel] = useState('');
   const [creating, setCreating] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
-  const firstChain = Object.keys(chainsMap)[0] ?? '';
-  const effectiveChain = selectedChain || firstChain;
+  // First chain in the currently selected network — used as fallback
+  // when the user hasn't explicitly picked one or after switching networks.
+  const firstChainInNetwork = useMemo(() => {
+    const all = Object.values(chainsMap) as ChainConfig[];
+    const match = all.find(c =>
+      network === 'testnet' ? isTestnetChain(c) : !isTestnetChain(c),
+    );
+    return match?.name ?? '';
+  }, [chainsMap, network]);
+
+  // Clear the selection if it doesn't belong to the active network.
+  const selectedCfg = selectedChain ? (chainsMap[selectedChain] as ChainConfig | undefined) : undefined;
+  const selectedBelongsToNetwork = !!selectedCfg &&
+    (network === 'testnet' ? isTestnetChain(selectedCfg) : !isTestnetChain(selectedCfg));
+  const effectiveChain = selectedBelongsToNetwork ? selectedChain : firstChainInNetwork;
+
+  function handleNetworkChange(next: 'mainnet' | 'testnet') {
+    if (next === network) return;
+    setNetwork(next);
+    setSelectedChain('');
+  }
 
   async function handleCreate() {
     if (!effectiveChain) return;
@@ -109,12 +131,43 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
+                {t('wallets.network')}
+              </label>
+              <div className="inline-flex p-1 rounded-xl bg-surface-container-lowest border border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => handleNetworkChange('mainnet')}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    network === 'mainnet'
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {t('wallets.mainnet')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNetworkChange('testnet')}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    network === 'testnet'
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {t('wallets.testnet')}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
                 {t('wallets.chain')}
               </label>
               <ChainSelector
                 chains={chainsMap}
                 value={effectiveChain}
                 onChange={setSelectedChain}
+                network={network}
               />
             </div>
 
