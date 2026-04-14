@@ -81,12 +81,22 @@ export default function AuditHistory() {
     setError(null);
 
     // approval_approve / approval_reject are pseudo-actions: the backend
-    // doesn't store them as action values, it updates an existing entry's
-    // status to 'success' or 'rejected'. We skip the action query param
-    // for these and rely on client-side filtering below.
-    const isApprovalFilter = action === 'approval_approve' || action === 'approval_reject';
-    const qs = `page=${p}&limit=${PAGE_SIZE}${action && !isApprovalFilter ? `&action=${action}` : ''}${walletId ? `&wallet_id=${encodeURIComponent(walletId)}` : ''}`;
-    const res = await api<{ logs: AuditLog[]; total?: number }>(`/api/audit/logs?${qs}`);
+    // stores them as status updates on an existing pending entry (status
+    // becomes 'success' or 'rejected'). Translate to status/approved
+    // query params so pagination happens server-side.
+    const params = new URLSearchParams();
+    params.set('page', String(p));
+    params.set('limit', String(PAGE_SIZE));
+    if (walletId) params.set('wallet_id', walletId);
+    if (action === 'approval_approve') {
+      params.set('status', 'success');
+      params.set('approved', 'true');
+    } else if (action === 'approval_reject') {
+      params.set('status', 'rejected');
+    } else if (action) {
+      params.set('action', action);
+    }
+    const res = await api<{ logs: AuditLog[]; total?: number }>(`/api/audit/logs?${params.toString()}`);
 
     if (res.success && Array.isArray(res.logs)) {
       setLogs(res.logs);
@@ -118,12 +128,8 @@ export default function AuditHistory() {
   const canPrev = page > 1;
   const canNext = totalPages !== null ? page < totalPages : logs.length === PAGE_SIZE;
 
-  // Client-side filters:
-  // - wallet_id: safety net in case the backend doesn't honor it
-  // - approval_approve/approval_reject: these aren't real action values; the
-  //   backend updates an existing pending log's status to 'success' or
-  //   'rejected' instead. Filter locally on status (+ approved_at for
-  //   approvals, to distinguish manual approve from auto-success entries).
+  // Client-side safety net: mirror the backend filters in case an older
+  // backend version is deployed and ignores status/approved/wallet_id.
   const visibleLogs = logs.filter(log => {
     if (walletFilter && log.wallet_id !== walletFilter) return false;
     if (actionFilter === 'approval_approve') {
