@@ -58,10 +58,6 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
 
         {/* Auth Card */}
         <div className="bg-surface-container-low rounded-2xl ghost-border p-6 space-y-5">
-          <h2 className="text-center text-lg font-headline font-semibold text-on-surface">
-            {mode === 'login' ? t('onboarding.loginTitle') : t('onboarding.signupTitle')}
-          </h2>
-
           {mode === 'signup' && (
             <div>
               <label className="text-xs font-medium text-on-surface-variant block mb-1.5">
