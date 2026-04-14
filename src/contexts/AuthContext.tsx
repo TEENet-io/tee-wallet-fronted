@@ -9,7 +9,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   loading: boolean;
   login: () => Promise<boolean>;
-  register: (displayName: string) => Promise<boolean>;
+  register: (email: string, code: string, verificationId: string) => Promise<boolean>;
+  sendEmailCode: (email: string) => Promise<number | null>;
+  verifyEmailCode: (email: string, code: string) => Promise<string | null>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<boolean>;
   requireReauth: () => Promise<boolean>;
@@ -81,21 +83,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [toast]);
 
-  // ── Register: matches old registerPasskey() exactly ──
-  // Old code uses /api/auth/passkey/register/begin, returns { options, invite_token }
-  const register = useCallback(async (displayName: string) => {
+  const sendEmailCode = useCallback(async (email: string): Promise<number | null> => {
     setLoading(true);
     try {
-      // Step 1: begin registration
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await api<any>('/api/auth/email/send-code', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      if (!res.success) {
+        toast(res.error || 'Failed to send code', 'error');
+        return null;
+      }
+      toast('Verification code sent. Check your inbox.', 'success');
+      // Backend tells us how many seconds the user must wait before
+      // requesting another code. Fall back to 60 if the field is missing.
+      const cooldown = typeof res.resend_cooldown === 'number' ? res.resend_cooldown : 60;
+      return cooldown;
+    } catch (e) {
+      toast(`Send code error: ${(e as Error).message}`, 'error');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const verifyEmailCode = useCallback(async (email: string, code: string) => {
+    setLoading(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await api<any>('/api/auth/email/verify-code', {
+        method: 'POST',
+        body: JSON.stringify({ email, code }),
+      });
+      if (!res.success) {
+        toast(res.error || 'Invalid code', 'error');
+        return null;
+      }
+      return res.verification_id as string;
+    } catch (e) {
+      toast(`Verify code error: ${(e as Error).message}`, 'error');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  // ── Register: three-step flow with email verification ──
+  const register = useCallback(async (_email: string, _code: string, verificationId: string) => {
+    setLoading(true);
+    try {
+      // Step 1: begin registration with verification_id (no display_name).
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const beginRes = await api<any>('/api/auth/passkey/register/begin', {
         method: 'POST',
-        body: JSON.stringify({ display_name: displayName }),
+        body: JSON.stringify({ verification_id: verificationId }),
       });
       if (!beginRes.success) { toast(beginRes.error || 'Failed to start registration', 'error'); return false; }
 
-      // Step 2: detect platform authenticator, then set authenticatorAttachment accordingly
-      // If device has biometric (Touch ID / Face ID), prefer local; otherwise allow cross-platform (QR code)
+      // Step 2: detect platform authenticator.
       const hasPlatform = typeof PublicKeyCredential !== 'undefined'
         && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable
         ? await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
@@ -109,18 +155,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!credential) { toast('Registration cancelled', 'error'); return false; }
       const credJSON = credentialToJSON(credential);
 
-      // Step 3: verify - old code sends invite_token
+      // Step 3: verify with verification_id (consumes the code).
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verRes = await api<any>('/api/auth/passkey/register/verify', {
         method: 'POST',
         body: JSON.stringify({
           invite_token: beginRes.invite_token,
           credential: credJSON,
+          verification_id: verificationId,
         }),
       });
       if (!verRes.success) { toast(verRes.error || 'Registration failed', 'error'); return false; }
 
-      // Old code doesn't auto-login after register, just shows success and switches to login tab
       toast('Registered! Please log in with your Passkey.', 'success');
       return true;
     } catch (e) {
@@ -181,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, isAuthenticated, loading,
-      login, register, logout, deleteAccount, requireReauth,
+      login, register, sendEmailCode, verifyEmailCode, logout, deleteAccount, requireReauth,
       getFreshPasskeyCredential: getFreshPasskeyCredentialFn,
     }}>
       {children}

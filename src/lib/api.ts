@@ -45,7 +45,11 @@ export async function api<T = Record<string, unknown>>(
 
   try {
     const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
-    if (res.status === 401) {
+    // Only treat 401 as "session expired" when we actually sent a session
+    // token. Public endpoints (e.g. email verification) use 401 to mean
+    // "wrong credentials for this request" and must surface their own
+    // error body instead of being hijacked into the logout flow.
+    if (res.status === 401 && sessionToken) {
       clearSession();
       // Force re-render: AuthContext reads from getSessionToken()
       // which is now empty, so isAuthenticated becomes false → shows login
