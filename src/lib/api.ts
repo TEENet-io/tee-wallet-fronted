@@ -1,5 +1,13 @@
-// Read the base path captured in index.html before React Router changed the URL.
-const API_BASE = (window as any).__API_BASE__ ?? '';
+// Derive the API base path from the current URL so deployments under a
+// sub-path (e.g. /instance/<id>/) prefix API requests correctly.
+// NOTE: computed here (inside a module script) instead of via an inline
+// <script> in index.html, because the server sets a strict CSP
+// (script-src 'self') which blocks inline scripts.
+const API_BASE = (() => {
+  const injected = (window as unknown as { __API_BASE__?: string }).__API_BASE__;
+  if (typeof injected === 'string') return injected;
+  return window.location.pathname.replace(/\/+$/, '');
+})();
 
 let sessionToken = localStorage.getItem('ocw_session') || '';
 let csrfToken = localStorage.getItem('ocw_csrf') || '';

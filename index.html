@@ -4,14 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TEENet Wallet</title>
-    <script>
-      // Ensure trailing slash so relative asset paths (./assets/...) resolve correctly.
-      // Without it, the browser treats the last path segment as a filename.
-      if (window.location.pathname !== '/' && !window.location.pathname.endsWith('/')) {
-        window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
-      }
-      window.__API_BASE__ = window.location.pathname.replace(/\/+$/, '');
-    </script>
   </head>
   <body>
     <div id="root"></div>
