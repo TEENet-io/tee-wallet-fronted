@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TEENet Wallet</title>
+    <script nonce="__CSP_NONCE__">
+      // Vite builds with `base: './'`, so asset URLs in this file are relative.
+      // Without a trailing slash on the page URL, the browser treats the last
+      // path segment as a filename and resolves ./assets/... against the wrong
+      // base. Redirect bare paths to the same path with a trailing slash before
+      // the body's <script> tags start fetching.
+      if (window.location.pathname !== '/' && !window.location.pathname.endsWith('/')) {
+        window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
