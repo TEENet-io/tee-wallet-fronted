@@ -70,6 +70,10 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   // Stores the newly generated plaintext key — only shown once after generation.
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedEndpoint, setCopiedEndpoint] = useState(false);
+
+  const apiEndpoint =
+    (window.location.origin + ((window as unknown as { __API_BASE__?: string }).__API_BASE__ ?? window.location.pathname)).replace(/\/+$/, '');
 
   const [generating, setGenerating] = useState(false);
   const [keyLabel, setKeyLabel] = useState('');
@@ -446,6 +450,12 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function handleCopyEndpoint() {
+    await navigator.clipboard.writeText(apiEndpoint);
+    setCopiedEndpoint(true);
+    setTimeout(() => setCopiedEndpoint(false), 2000);
+  }
+
   async function handleCopyInviteUrl() {
     if (!inviteResult) return;
     await navigator.clipboard.writeText(inviteResult.register_url);
@@ -506,23 +516,43 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
 
         {/* One-time new key banner */}
         {newKey && (
-          <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-secondary/10 border border-secondary/30">
-            <div className="space-y-1 min-w-0">
-              <p className="text-xs text-secondary uppercase tracking-widest font-bold">
-                {t('settings.newKey')}
-              </p>
-              <code className="block text-sm text-on-surface break-all font-mono">{newKey}</code>
-              <p className="text-xs text-slate-500">
-                {t('settings.newKeyWarning')}
-              </p>
+          <div className="p-4 rounded-2xl bg-secondary/10 border border-secondary/30 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1 min-w-0">
+                <p className="text-xs text-secondary uppercase tracking-widest font-bold">
+                  {t('settings.newKey')}
+                </p>
+                <code className="block text-sm text-on-surface break-all font-mono">{newKey}</code>
+                <p className="text-xs text-slate-500">
+                  {t('settings.newKeyWarning')}
+                </p>
+              </div>
+              <button
+                onClick={handleCopyNewKey}
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/20 text-secondary text-sm font-semibold hover:bg-secondary/30 transition-colors"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? t('settings.copied') : t('settings.copy')}
+              </button>
             </div>
-            <button
-              onClick={handleCopyNewKey}
-              className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/20 text-secondary text-sm font-semibold hover:bg-secondary/30 transition-colors"
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? t('settings.copied') : t('settings.copy')}
-            </button>
+            <div className="flex items-start justify-between gap-4 pt-3 border-t border-secondary/20">
+              <div className="space-y-1 min-w-0">
+                <p className="text-xs text-secondary uppercase tracking-widest font-bold">
+                  {t('settings.apiEndpoint')}
+                </p>
+                <code className="block text-sm text-on-surface break-all font-mono">{apiEndpoint}</code>
+                <p className="text-xs text-slate-500">
+                  {t('settings.apiEndpointHint')}
+                </p>
+              </div>
+              <button
+                onClick={handleCopyEndpoint}
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/20 text-secondary text-sm font-semibold hover:bg-secondary/30 transition-colors"
+              >
+                {copiedEndpoint ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedEndpoint ? t('settings.copied') : t('settings.copy')}
+              </button>
+            </div>
           </div>
         )}
 

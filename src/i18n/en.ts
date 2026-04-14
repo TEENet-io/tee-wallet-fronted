@@ -286,6 +286,8 @@ const en: Record<string, string> = {
   'settings.verifying': 'Verifying…',
   'settings.newKey': 'New Key — Copy Now',
   'settings.newKeyWarning': 'This key will not be shown again once you leave this page.',
+  'settings.apiEndpoint': 'API Endpoint',
+  'settings.apiEndpointHint': 'Use this base URL with your API key in the Authorization header.',
   'settings.copy': 'Copy',
   'settings.copied': 'Copied',
   'settings.noKeys': 'No API keys yet. Generate one to get started.',
@@ -356,6 +358,7 @@ const en: Record<string, string> = {
 
   // Audit action labels
   'history.action.all': 'All Actions',
+  'history.wallet.all': 'All Wallets',
   'history.action.login': 'Login',
   'history.action.walletCreate': 'Wallet Create',
   'history.action.walletDelete': 'Wallet Delete',

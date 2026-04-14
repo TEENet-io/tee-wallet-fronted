@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useWallets } from '../contexts/WalletContext';
 import type { AuditLog } from '../types';
 
 // Action filter options
@@ -9,23 +10,8 @@ interface ActionOption { value: string; labelKey: string }
 
 const ACTION_OPTIONS: ActionOption[] = [
   { value: '', labelKey: 'history.action.all' },
-  { value: 'login', labelKey: 'history.action.login' },
-  { value: 'wallet_create', labelKey: 'history.action.walletCreate' },
-  { value: 'wallet_delete', labelKey: 'history.action.walletDelete' },
-  { value: 'transfer', labelKey: 'history.action.transfer' },
-  { value: 'sign', labelKey: 'history.action.sign' },
-  { value: 'policy_update', labelKey: 'history.action.policyUpdate' },
   { value: 'approval_approve', labelKey: 'history.action.approve' },
   { value: 'approval_reject', labelKey: 'history.action.reject' },
-  { value: 'contract_add', labelKey: 'history.action.contractAdd' },
-  { value: 'contract_update', labelKey: 'history.action.contractUpdate' },
-  { value: 'contract_call', labelKey: 'history.action.contractCall' },
-  { value: 'approve_token', labelKey: 'history.action.tokenApprove' },
-  { value: 'revoke_approval', labelKey: 'history.action.revokeApproval' },
-  { value: 'apikey_generate', labelKey: 'history.action.apikeyGenerate' },
-  { value: 'apikey_revoke', labelKey: 'history.action.apikeyRevoke' },
-  { value: 'wrap_sol', labelKey: 'history.action.wrapSol' },
-  { value: 'unwrap_sol', labelKey: 'history.action.unwrapSol' },
 ];
 
 // Dot color by action type
@@ -70,10 +56,12 @@ const PAGE_SIZE = 20;
 
 export default function AuditHistory() {
   const { t } = useLanguage();
+  const { wallets, loadWallets } = useWallets();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState('');
+  const [walletFilter, setWalletFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,12 +75,12 @@ export default function AuditHistory() {
     return action.replace(/_/g, ' ');
   }
 
-  const fetchLogs = useCallback(async (p: number, action: string, isRefresh = false) => {
+  const fetchLogs = useCallback(async (p: number, action: string, walletId: string, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
 
-    const qs = `page=${p}&limit=${PAGE_SIZE}${action ? `&action=${action}` : ''}`;
+    const qs = `page=${p}&limit=${PAGE_SIZE}${action ? `&action=${action}` : ''}${walletId ? `&wallet_id=${encodeURIComponent(walletId)}` : ''}`;
     const res = await api<{ logs: AuditLog[]; total?: number }>(`/api/audit/logs?${qs}`);
 
     if (res.success && Array.isArray(res.logs)) {
@@ -106,20 +94,32 @@ export default function AuditHistory() {
     else setLoading(false);
   }, [t]);
 
+  useEffect(() => { loadWallets(); }, [loadWallets]);
+
   useEffect(() => {
-    fetchLogs(page, actionFilter);
-  }, [fetchLogs, page, actionFilter]);
+    fetchLogs(page, actionFilter, walletFilter);
+  }, [fetchLogs, page, actionFilter, walletFilter]);
 
   const handleFilterChange = (value: string) => {
     setActionFilter(value);
     setPage(1);
   };
 
+  const handleWalletChange = (value: string) => {
+    setWalletFilter(value);
+    setPage(1);
+  };
+
   const canPrev = page > 1;
   const canNext = totalPages !== null ? page < totalPages : logs.length === PAGE_SIZE;
 
+  // Client-side wallet filter (safety net in case the backend doesn't honor wallet_id)
+  const visibleLogs = walletFilter
+    ? logs.filter(log => log.wallet_id === walletFilter)
+    : logs;
+
   // Group logs by date
-  const grouped = logs.reduce<Record<string, AuditLog[]>>((acc, log) => {
+  const grouped = visibleLogs.reduce<Record<string, AuditLog[]>>((acc, log) => {
     const date = new Date(log.created_at).toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric',
     });
@@ -134,7 +134,7 @@ export default function AuditHistory() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-on-surface">{t('history.title')}</h1>
         <button
-          onClick={() => fetchLogs(page, actionFilter, true)}
+          onClick={() => fetchLogs(page, actionFilter, walletFilter, true)}
           disabled={refreshing || loading}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50"
         >
@@ -144,7 +144,7 @@ export default function AuditHistory() {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="relative">
           <select
             value={actionFilter}
@@ -154,6 +154,21 @@ export default function AuditHistory() {
             {ACTION_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value} className="bg-surface-container">
                 {t(opt.labelKey)}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-outline pointer-events-none" />
+        </div>
+        <div className="relative">
+          <select
+            value={walletFilter}
+            onChange={e => handleWalletChange(e.target.value)}
+            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-surface-container border border-outline-variant/15 text-sm text-on-surface focus:outline-none focus:border-primary cursor-pointer transition-colors max-w-[220px] truncate"
+          >
+            <option value="" className="bg-surface-container">{t('history.wallet.all')}</option>
+            {wallets.map(w => (
+              <option key={w.id} value={w.id} className="bg-surface-container">
+                {w.label || w.address.slice(0, 10)} · {w.chain}
               </option>
             ))}
           </select>
@@ -181,13 +196,13 @@ export default function AuditHistory() {
         <div className="text-center py-12">
           <p className="text-on-surface-variant text-sm mb-3">{error}</p>
           <button
-            onClick={() => fetchLogs(page, actionFilter)}
+            onClick={() => fetchLogs(page, actionFilter, walletFilter)}
             className="text-sm text-primary hover:underline"
           >
             {t('approval.tryAgain')}
           </button>
         </div>
-      ) : logs.length === 0 ? (
+      ) : visibleLogs.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-on-surface-variant text-sm">{t('history.empty')}</p>
         </div>

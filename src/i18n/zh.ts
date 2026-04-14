@@ -286,6 +286,8 @@ const zh: Record<string, string> = {
   'settings.verifying': '验证中…',
   'settings.newKey': '新密钥 — 立即复制',
   'settings.newKeyWarning': '离开此页面后将无法再次查看此密钥。',
+  'settings.apiEndpoint': 'API 接入地址',
+  'settings.apiEndpointHint': '在请求的 Authorization 头中附带 API Key，使用该基础 URL 调用接口。',
   'settings.copy': '复制',
   'settings.copied': '已复制',
   'settings.noKeys': '暂无 API 密钥。生成一个开始使用。',
@@ -356,6 +358,7 @@ const zh: Record<string, string> = {
 
   // Audit action labels
   'history.action.all': '全部操作',
+  'history.wallet.all': '全部钱包',
   'history.action.login': '登录',
   'history.action.walletCreate': '创建钱包',
   'history.action.walletDelete': '删除钱包',
