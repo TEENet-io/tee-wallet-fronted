@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { api, setSession, clearSession, getSessionToken } from '../lib/api';
 import { normalizeOptions, credentialToJSON } from '../lib/passkey';
 import { useToast } from './ToastContext';
@@ -22,12 +22,61 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 let reauthExpiry = 0;
 
+// Decode the base64url-encoded clientDataJSON on a credential JSON payload
+// and extract the challenge (which is itself a base64url-encoded string the
+// authenticator signed). Returns null if anything in the chain is missing.
+function extractChallengeFromCredential(credJSON: Record<string, unknown>): string | null {
+  try {
+    const response = credJSON.response as Record<string, unknown> | undefined;
+    const clientDataJSONb64 = response?.clientDataJSON as string | undefined;
+    if (!clientDataJSONb64) return null;
+    const b64 = clientDataJSONb64.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
+    const jsonStr = atob(b64 + pad);
+    const parsed = JSON.parse(jsonStr) as { challenge?: string };
+    return parsed.challenge ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(() => {
     try { return JSON.parse(localStorage.getItem('ocw_user') || 'null'); } catch { return null; }
   });
   const [loading, setLoading] = useState(false);
+  // Abort controller for in-flight passkey ceremonies. A new login() call
+  // aborts any previous navigator.credentials.get() so its stale assertion
+  // can't leak into the next flow (best-effort; some authenticators ignore
+  // the signal).
+  const loginAbortRef = useRef<AbortController | null>(null);
+  // Rolling window of the last few (login_session_id, challenge) pairs we
+  // obtained from /passkey/options. 1Password on Android aggressively
+  // caches the first get() result and will happily return an assertion
+  // signed with a *previous* challenge long after we've moved on to a new
+  // session. Instead of rejecting that assertion we reverse-map its
+  // challenge back to the original session_id and submit verify against
+  // the matching session — whichever session the authenticator actually
+  // signed for gets consumed, not whichever one we just issued.
+  type SessionSlot = { sessionId: number; challenge: string; optRes: unknown; ts: number };
+  const sessionCacheRef = useRef<SessionSlot[]>([]);
+  const SESSION_CACHE_MAX = 5;
+  const SESSION_CACHE_TTL_MS = 3 * 60_000; // server-side TTL is longer; this is a local safety net
+  const rememberSession = (slot: SessionSlot) => {
+    const now = Date.now();
+    const fresh = sessionCacheRef.current.filter((s) => now - s.ts < SESSION_CACHE_TTL_MS);
+    // Dedupe by sessionId in case the same options response was cached twice.
+    const filtered = fresh.filter((s) => s.sessionId !== slot.sessionId);
+    filtered.push(slot);
+    sessionCacheRef.current = filtered.slice(-SESSION_CACHE_MAX);
+  };
+  const findSessionByChallenge = (challenge: string): SessionSlot | undefined => {
+    const now = Date.now();
+    return sessionCacheRef.current.find(
+      (s) => s.challenge === challenge && now - s.ts < SESSION_CACHE_TTL_MS,
+    );
+  };
 
   const isAuthenticated = !!user && !!getSessionToken();
 
@@ -43,17 +92,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Login: matches old passkeyLogin() exactly ──
   const login = useCallback(async () => {
+    // Cancel any in-flight login ceremony before starting a new one.
+    loginAbortRef.current?.abort();
+    const abort = new AbortController();
+    loginAbortRef.current = abort;
+
     setLoading(true);
     try {
-      // Step 1: get challenge options
+      // Step 1: fetch a fresh challenge. Each call generates a new
+      // login_session_id server-side; we remember the (id, challenge) pair
+      // so we can reverse-lookup below if the authenticator hands us a
+      // stale assertion.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const optRes = await api<any>('/api/auth/passkey/options');
+      if (abort.signal.aborted) return false;
       if (!optRes.success) { toast(optRes.error || 'Failed to get challenge', 'error'); return false; }
+      const issuedSessionId: number = optRes.data?.login_session_id;
+      const issuedChallenge: string = optRes.data?.options?.publicKey?.challenge;
+      if (issuedSessionId && issuedChallenge) {
+        rememberSession({ sessionId: issuedSessionId, challenge: issuedChallenge, optRes, ts: Date.now() });
+      }
 
-      // Step 2: prompt passkey - old code: normalizeOptions(optRes.data?.options)
-      const credential = await navigator.credentials.get(normalizeOptions(optRes.data?.options));
+      // Step 2: prompt passkey. AbortSignal is best-effort — 1Password
+      // Android is known to ignore it and return an older cached assertion.
+      const opts = normalizeOptions(optRes.data?.options);
+      if (opts?.publicKey) opts.signal = abort.signal;
+      let credential: Credential | null;
+      try {
+        credential = await navigator.credentials.get(opts);
+      } catch (e) {
+        if ((e as DOMException)?.name === 'AbortError' || abort.signal.aborted) {
+          return false;
+        }
+        throw e;
+      }
+      if (abort.signal.aborted) return false;
       if (!credential) { toast('Login cancelled', 'error'); return false; }
       const credJSON = credentialToJSON(credential);
+
+      // Step 2.5: reverse-lookup the signed challenge. If the authenticator
+      // returned an assertion for a *previous* session (1Password cache),
+      // find that session's id in our local rolling cache and verify
+      // against it instead of the one we just issued.
+      const signedChallenge = extractChallengeFromCredential(credJSON);
+      let verifySessionId = issuedSessionId;
+      if (signedChallenge && signedChallenge !== issuedChallenge) {
+        const match = findSessionByChallenge(signedChallenge);
+        if (match) {
+          verifySessionId = match.sessionId;
+        }
+      }
 
       // Step 3: verify
       const verRes = await api<{
@@ -63,12 +151,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }>('/api/auth/passkey/verify', {
         method: 'POST',
         body: JSON.stringify({
-          login_session_id: optRes.data?.login_session_id,
+          login_session_id: verifySessionId,
           credential: credJSON,
         }),
       });
+      if (abort.signal.aborted) return false;
       if (!verRes.success) { toast(verRes.error || 'Login failed', 'error'); return false; }
 
+      // Session was consumed server-side; drop the matching cache entry.
+      sessionCacheRef.current = sessionCacheRef.current.filter((s) => s.sessionId !== verifySessionId);
       setSession(verRes.session_token, verRes.csrf_token || '');
       const u = { id: verRes.user_id, username: verRes.username };
       setUser(u);
@@ -76,10 +167,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast(`Logged in as ${verRes.username}`, 'success');
       return true;
     } catch (e) {
+      if (abort.signal.aborted) return false;
       toast(`Login error: ${(e as Error).message}`, 'error');
       return false;
     } finally {
-      setLoading(false);
+      if (loginAbortRef.current === abort) {
+        loginAbortRef.current = null;
+        setLoading(false);
+      }
     }
   }, [toast]);
 
@@ -167,7 +262,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (!verRes.success) { toast(verRes.error || 'Registration failed', 'error'); return false; }
 
-      toast('Registered! Please log in with your Passkey.', 'success');
+      // Backend issues a session on successful register so we can skip the
+      // separate passkey login step. This avoids the Android GPM indexing
+      // delay that otherwise makes the first post-register login fail.
+      if (verRes.session_token) {
+        setSession(verRes.session_token, verRes.csrf_token || '');
+        const u = { id: String(verRes.user_id), username: verRes.username };
+        setUser(u);
+        localStorage.setItem('ocw_user', JSON.stringify(u));
+        toast(`Welcome, ${verRes.username}`, 'success');
+      } else {
+        toast('Registered! Please log in with your Passkey.', 'success');
+      }
       return true;
     } catch (e) {
       toast(`Registration error: ${(e as Error).message}`, 'error');
@@ -186,16 +292,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Get a fresh passkey credential for sensitive operations.
   // Returns { login_session_id, credential } WITHOUT verifying first —
-  // the calling API endpoint (e.g. apikey/generate, account/delete) does its own verify.
+  // the calling API endpoint (e.g. apikey/generate, account/delete) does
+  // its own verify. Uses the same reverse-lookup trick as login(): if the
+  // authenticator hands us an assertion for a previously-issued challenge
+  // (1Password Android cache bug) we submit verify against that earlier
+  // session_id instead of the one we just issued.
   const getFreshPasskeyCredentialFn = async (): Promise<Record<string, unknown> | null> => {
+    loginAbortRef.current?.abort();
+    const abort = new AbortController();
+    loginAbortRef.current = abort;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const optRes = await api<any>('/api/auth/passkey/options');
+      if (abort.signal.aborted) return null;
       if (!optRes.success) { toast(optRes.error || 'Failed to get challenge', 'error'); return null; }
-      const credential = await navigator.credentials.get(normalizeOptions(optRes.data?.options));
+      const issuedSessionId: number = optRes.data?.login_session_id;
+      const issuedChallenge: string = optRes.data?.options?.publicKey?.challenge;
+      if (issuedSessionId && issuedChallenge) {
+        rememberSession({ sessionId: issuedSessionId, challenge: issuedChallenge, optRes, ts: Date.now() });
+      }
+      const opts = normalizeOptions(optRes.data?.options);
+      if (opts?.publicKey) opts.signal = abort.signal;
+      let credential: Credential | null;
+      try {
+        credential = await navigator.credentials.get(opts);
+      } catch (e) {
+        if ((e as DOMException)?.name === 'AbortError' || abort.signal.aborted) return null;
+        throw e;
+      }
+      if (abort.signal.aborted) return null;
       if (!credential) { toast('Verification cancelled', 'error'); return null; }
       const credJSON = credentialToJSON(credential);
-      return { login_session_id: optRes.data?.login_session_id, credential: credJSON };
+
+      // Reverse-lookup the signed challenge against our rolling cache.
+      const signedChallenge = extractChallengeFromCredential(credJSON);
+      let verifySessionId = issuedSessionId;
+      if (signedChallenge && signedChallenge !== issuedChallenge) {
+        const match = findSessionByChallenge(signedChallenge);
+        if (match) {
+          verifySessionId = match.sessionId;
+        }
+      }
+      // NOTE: do NOT evict the session from the cache here — the caller
+      // still has to POST verify. Let the success path at the caller or
+      // the natural TTL expire it.
+      return { login_session_id: verifySessionId, credential: credJSON };
     } catch (e) {
       toast((e as Error).message || 'Verification failed', 'error');
       return null;

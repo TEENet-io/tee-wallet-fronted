@@ -19,6 +19,10 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
   const [codeSent, setCodeSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  // Cache the verification_id so a failed passkey ceremony can retry without
+  // re-entering the email code. Backend VerifyCode is idempotent as a belt,
+  // this is the suspenders.
+  const [vid, setVid] = useState<string | null>(null);
 
   // Tick the resend cooldown down every second.
   useEffect(() => {
@@ -35,6 +39,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
       setCode('');
       setCodeSent(false);
       setCooldown(0);
+      setVid(null);
     }
   }
 
@@ -50,12 +55,21 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
 
   async function handleCreateAccount() {
     if (code.length !== 6) { setShowHint(true); return; }
-    const vid = await verifyEmailCode(email.trim(), code);
-    if (!vid) return;
-    const ok = await register(email.trim(), code, vid);
+    // Reuse the cached vid if we already verified this code — lets the user
+    // retry the passkey ceremony (e.g. after biometric cancel or save dialog
+    // dismissal) without bouncing back to the "enter email code" state.
+    let currentVid = vid;
+    if (!currentVid) {
+      currentVid = await verifyEmailCode(email.trim(), code);
+      if (!currentVid) return;
+      setVid(currentVid);
+    }
+    const ok = await register(email.trim(), code, currentVid);
     if (ok) {
-      // Backend creates the user but does NOT sign them in — bounce to login.
-      switchTo('login');
+      // Backend auto-issues a session on register now, so we can jump
+      // straight into the wallet without asking for a second passkey prompt.
+      setVid(null);
+      onLoginSuccess();
     }
   }
 
@@ -113,6 +127,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
                       setEmail(e.target.value);
                       setCodeSent(false);
                       setCooldown(0);
+                      setVid(null);
                       if (e.target.value.trim()) setShowHint(false);
                     }}
                     disabled={loading}
@@ -153,7 +168,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
                   inputMode="numeric"
                   maxLength={6}
                   value={code}
-                  onChange={(e) => { setCode(e.target.value.replace(/\D/g, '')); if (e.target.value) setShowHint(false); }}
+                  onChange={(e) => { setCode(e.target.value.replace(/\D/g, '')); setVid(null); if (e.target.value) setShowHint(false); }}
                   disabled={loading || !codeSent}
                 />
               </div>
