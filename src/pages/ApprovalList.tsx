@@ -64,6 +64,14 @@ function StatusBadge({ status }: StatusBadgeProps) {
       </span>
     );
   }
+  if (status === 'failed') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/25 text-orange-400 text-[10px] font-black uppercase tracking-[0.15em]">
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+        {t('approvals.failed')}
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-500/10 border border-slate-500/25 text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">
       <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
@@ -76,6 +84,7 @@ function statusAccentClass(status: Approval['status']): string {
   if (status === 'pending') return 'bg-secondary';
   if (status === 'approved') return 'bg-green-400';
   if (status === 'rejected') return 'bg-red-400';
+  if (status === 'failed') return 'bg-orange-400';
   return 'bg-slate-500';
 }
 

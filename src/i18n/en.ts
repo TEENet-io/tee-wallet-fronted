@@ -144,6 +144,7 @@ const en: Record<string, string> = {
   'approvals.approved': 'Approved',
   'approvals.rejected': 'Rejected',
   'approvals.expired': 'Expired',
+  'approvals.failed': 'Failed',
 
   // Approval detail
   'approval.back': 'Return to Queue',
@@ -165,6 +166,7 @@ const en: Record<string, string> = {
   'approval.txAuthorized': 'Transaction Authorized',
   'approval.txRejected': 'Transaction Rejected',
   'approval.txExpired': 'Request Expired',
+  'approval.txFailed': 'Transaction Failed',
   'approval.backToApprovals': 'Back to Approvals',
   'approval.loadError': 'Could not load approval',
   'approval.loadErrorGeneric': 'Failed to load approval',

@@ -59,7 +59,7 @@ export interface Approval {
   id: string;
   wallet_id: string;
   action: string;
-  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'failed';
   approval_type?: string;
   tx_context?: string;
   policy_data?: string;

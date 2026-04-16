@@ -144,6 +144,7 @@ const zh: Record<string, string> = {
   'approvals.approved': '已批准',
   'approvals.rejected': '已拒绝',
   'approvals.expired': '已过期',
+  'approvals.failed': '已失败',
 
   // Approval detail
   'approval.back': '返回队列',
@@ -165,6 +166,7 @@ const zh: Record<string, string> = {
   'approval.txAuthorized': '交易已授权',
   'approval.txRejected': '交易已拒绝',
   'approval.txExpired': '请求已过期',
+  'approval.txFailed': '交易失败',
   'approval.backToApprovals': '返回审批列表',
   'approval.loadError': '无法加载审批',
   'approval.loadErrorGeneric': '加载审批失败',

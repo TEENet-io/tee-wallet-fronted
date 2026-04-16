@@ -67,6 +67,7 @@ function statusColors(status: Approval['status']) {
   if (status === 'approved') return { dot: 'bg-green-400 shadow-[0_0_8px_#4ade80]', text: 'text-green-400', labelKey: 'approval.authorized' };
   if (status === 'rejected') return { dot: 'bg-red-400 shadow-[0_0_8px_#f87171]', text: 'text-red-400', labelKey: 'approval.txRejected' };
   if (status === 'expired') return { dot: 'bg-slate-400', text: 'text-slate-400', labelKey: 'approvals.expired' };
+  if (status === 'failed') return { dot: 'bg-orange-400 shadow-[0_0_8px_#fb923c]', text: 'text-orange-400', labelKey: 'approvals.failed' };
   return { dot: 'bg-secondary shadow-[0_0_8px_#5de6ff] animate-pulse', text: 'text-secondary', labelKey: 'approval.pendingAuth' };
 }
 
@@ -553,15 +554,18 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
         <div className={`rounded-2xl ghost-border p-5 flex flex-col items-center gap-3 ${
           approval.status === 'approved' ? 'bg-green-500/5 border-green-500/20' :
           approval.status === 'rejected' ? 'bg-red-500/5 border-red-500/20' :
+          approval.status === 'failed' ? 'bg-orange-500/5 border-orange-500/20' :
           'bg-surface-container-high'
         }`}>
           <CheckCircle2 className={`w-8 h-8 ${
             approval.status === 'approved' ? 'text-green-400' :
-            approval.status === 'rejected' ? 'text-red-400' : 'text-slate-400'
+            approval.status === 'rejected' ? 'text-red-400' :
+            approval.status === 'failed' ? 'text-orange-400' : 'text-slate-400'
           }`} />
           <p className="font-headline font-bold text-on-surface text-sm capitalize">
             {approval.status === 'approved' ? t('approval.txAuthorized') :
-             approval.status === 'rejected' ? t('approval.txRejected') : t('approval.txExpired')}
+             approval.status === 'rejected' ? t('approval.txRejected') :
+             approval.status === 'failed' ? t('approval.txFailed') : t('approval.txExpired')}
           </p>
           <button type="button" onClick={onBack} className="px-6 py-2 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface text-sm font-medium transition-all">
             {t('approval.backToApprovals')}
