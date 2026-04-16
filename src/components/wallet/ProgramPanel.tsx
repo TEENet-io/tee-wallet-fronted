@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { FileCode2, Plus, Trash2, Loader2, Pencil } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -283,7 +286,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
               {t('program.subtitle')}
             </p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl primary-gradient text-white text-sm font-bold hover:opacity-90 transition-all active:scale-95"
           >
@@ -335,7 +338,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
             <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">{t('program.quickAdd')}</p>
             <div className="flex flex-wrap gap-2">
               {availableDefaults.map(p => (
-                <button
+                <button type="button"
                   key={p.address}
                   onClick={() => handleAddDefault(p)}
                   disabled={adding}
@@ -405,7 +408,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
                     {/* Action buttons */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {/* Edit contract */}
-                      <button
+                      <button type="button"
                         onClick={() => toggleEdit(contract.id, contract)}
                         title={t('program.edit')}
                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -419,7 +422,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
                       </button>
 
                       {/* Delete */}
-                      <button
+                      <button type="button"
                         onClick={() => handleRemove(contract)}
                         disabled={isRemoving}
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 transition-all disabled:opacity-50 ml-1"

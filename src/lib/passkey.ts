@@ -1,3 +1,14 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/**
+ * Helpers for bridging server JSON and the browser WebAuthn API.
+ *
+ * The server speaks base64url over JSON; `navigator.credentials.{get,create}`
+ * speaks `ArrayBuffer` over structured objects. These helpers handle the
+ * conversion in both directions.
+ */
+
 function base64urlToBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const pad = base64.length % 4 === 0 ? '' : '='.repeat(4 - (base64.length % 4));
@@ -10,57 +21,108 @@ function base64urlToBuffer(base64url: string): ArrayBuffer {
 function bufferToBase64url(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
- * Normalize WebAuthn options from the server.
- * Matches the old index_old.html logic exactly:
- * - Handles both wrapped { publicKey: {...} } and raw objects
- * - Converts base64url strings to ArrayBuffers
- * - Deletes allowCredentials so browser shows all registered passkeys
+ * Shape of the raw options object as returned by the backend. The backend may
+ * wrap the actual options in a `{ publicKey: {...} }` envelope, or return the
+ * publicKey object directly.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function normalizeOptions(raw: any): any {
-  if (!raw) return raw;
-  const options = raw.publicKey ? raw : { publicKey: raw };
+interface ServerPublicKeyOptions {
+  challenge: string | ArrayBuffer;
+  user?: { id: string | ArrayBuffer; [k: string]: unknown };
+  allowCredentials?: unknown;
+  excludeCredentials?: Array<{ id: string | ArrayBuffer; [k: string]: unknown }>;
+  authenticatorSelection?: {
+    authenticatorAttachment?: AuthenticatorAttachment;
+    [k: string]: unknown;
+  };
+  [k: string]: unknown;
+}
+
+interface ServerWebAuthnOptions {
+  publicKey?: ServerPublicKeyOptions;
+  [k: string]: unknown;
+}
+
+/**
+ * Normalize WebAuthn options from the server for use with
+ * `navigator.credentials.get/create`.
+ *
+ * - Accepts both wrapped `{ publicKey: {...} }` envelopes and raw objects
+ * - Converts base64url `challenge` / `user.id` / `excludeCredentials[].id`
+ *   strings into `ArrayBuffer`s
+ * - Strips `allowCredentials` so the browser surfaces every registered passkey
+ *   rather than filtering to a specific one
+ */
+export function normalizeOptions(
+  raw: unknown,
+): { publicKey: PublicKeyCredentialRequestOptions | PublicKeyCredentialCreationOptions } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const typed = raw as ServerWebAuthnOptions;
+  const options: { publicKey: ServerPublicKeyOptions } = typed.publicKey
+    ? { publicKey: typed.publicKey }
+    : { publicKey: typed as unknown as ServerPublicKeyOptions };
+
   const pk = options.publicKey;
-  if (typeof pk.challenge === 'string') pk.challenge = base64urlToBuffer(pk.challenge);
-  if (typeof pk.user?.id === 'string') pk.user.id = base64urlToBuffer(pk.user.id);
-  // Clear allowCredentials so the browser shows all registered passkeys
+  if (typeof pk.challenge === 'string') {
+    pk.challenge = base64urlToBuffer(pk.challenge);
+  }
+  if (pk.user && typeof pk.user.id === 'string') {
+    pk.user.id = base64urlToBuffer(pk.user.id);
+  }
+  // Clear allowCredentials so the browser shows all registered passkeys.
   delete pk.allowCredentials;
   if (Array.isArray(pk.excludeCredentials)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pk.excludeCredentials = pk.excludeCredentials.map((c: any) => ({
+    pk.excludeCredentials = pk.excludeCredentials.map(c => ({
       ...c,
       id: typeof c.id === 'string' ? base64urlToBuffer(c.id) : c.id,
     }));
   }
-  return options;
+
+  return options as {
+    publicKey: PublicKeyCredentialRequestOptions | PublicKeyCredentialCreationOptions;
+  };
 }
 
 /**
- * Serialize a credential to JSON for sending to the server.
- * Matches the old index_old.html credentialToJSON exactly.
+ * Serialize a `Credential` returned by `navigator.credentials.{get,create}`
+ * into a JSON-safe shape the backend can verify. All `ArrayBuffer` fields are
+ * encoded as base64url strings.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function credentialToJSON(cred: any): Record<string, unknown> {
+export function credentialToJSON(cred: Credential): Record<string, unknown> {
+  const pk = cred as PublicKeyCredential;
   const base: Record<string, unknown> = {
-    id: cred.id,
-    type: cred.type,
-    rawId: bufferToBase64url(cred.rawId),
+    id: pk.id,
+    type: pk.type,
+    rawId: bufferToBase64url(pk.rawId),
   };
-  if (cred.response) {
-    const r = cred.response;
+  const response = pk.response as
+    | (AuthenticatorAttestationResponse & AuthenticatorAssertionResponse)
+    | undefined;
+  if (response) {
     const resp: Record<string, string> = {};
-    if (r.clientDataJSON) resp.clientDataJSON = bufferToBase64url(r.clientDataJSON);
-    if (r.attestationObject) resp.attestationObject = bufferToBase64url(r.attestationObject);
-    if (r.authenticatorData) resp.authenticatorData = bufferToBase64url(r.authenticatorData);
-    if (r.signature) resp.signature = bufferToBase64url(r.signature);
-    if (r.userHandle) resp.userHandle = bufferToBase64url(r.userHandle);
+    if (response.clientDataJSON) {
+      resp.clientDataJSON = bufferToBase64url(response.clientDataJSON);
+    }
+    if (response.attestationObject) {
+      resp.attestationObject = bufferToBase64url(response.attestationObject);
+    }
+    if (response.authenticatorData) {
+      resp.authenticatorData = bufferToBase64url(response.authenticatorData);
+    }
+    if (response.signature) {
+      resp.signature = bufferToBase64url(response.signature);
+    }
+    if (response.userHandle) {
+      resp.userHandle = bufferToBase64url(response.userHandle);
+    }
     base.response = resp;
   }
-  if (cred.authenticatorAttachment) base.authenticatorAttachment = cred.authenticatorAttachment;
+  if (pk.authenticatorAttachment) {
+    base.authenticatorAttachment = pk.authenticatorAttachment;
+  }
   return base;
 }

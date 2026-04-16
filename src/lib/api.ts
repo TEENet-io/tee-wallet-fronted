@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Derive the API base path from the current URL so deployments under a
 // sub-path (e.g. /instance/<id>/) prefix API requests correctly.
 // NOTE: computed here (inside a module script) instead of via an inline

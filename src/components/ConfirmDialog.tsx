@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useCallback } from 'react';
 import { AlertTriangle, HelpCircle } from 'lucide-react';
 
@@ -51,13 +54,13 @@ export function useConfirm() {
             <p className="text-sm text-on-surface-variant mb-6 whitespace-pre-line">{message}</p>
           )}
           <div className="flex gap-3 justify-end">
-            <button
+            <button type="button"
               onClick={() => handleClose(false)}
               className="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface text-sm font-medium hover:bg-surface-variant transition-colors"
             >
               Cancel
             </button>
-            <button
+            <button type="button"
               onClick={() => handleClose(true)}
               className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                 danger

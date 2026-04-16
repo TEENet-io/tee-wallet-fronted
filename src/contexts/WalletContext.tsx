@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { api } from '../lib/api';
 import { useToast } from './ToastContext';

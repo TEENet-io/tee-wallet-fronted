@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useEffect, useState } from 'react';
 import { Shield, Fingerprint, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -100,7 +103,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
         {/* Auth Card */}
         <div className="bg-surface-container-low rounded-2xl ghost-border p-6 space-y-5">
           {mode === 'login' && (
-            <button
+            <button type="button"
               onClick={handleLogin}
               disabled={loading}
               className="w-full bg-primary text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-sm"
@@ -173,7 +176,7 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
                 />
               </div>
 
-              <button
+              <button type="button"
                 onClick={handleCreateAccount}
                 disabled={loading || !canCreate}
                 className={`w-full font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-sm ${!canCreate ? 'bg-outline/30 text-on-surface/40 cursor-not-allowed' : 'bg-primary text-white hover:opacity-90'} disabled:opacity-40 disabled:cursor-not-allowed`}

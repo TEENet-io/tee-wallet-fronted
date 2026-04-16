@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Clock, RefreshCw, ChevronRight, Inbox } from 'lucide-react';
 import { api } from '../lib/api';
@@ -82,13 +85,28 @@ interface ApprovalCardProps {
   onClick: () => void;
 }
 
+// Loose string-typed view of backend JSON blobs. Fields come from the
+// approval's tx_context / policy_data and are all rendered as text in this
+// summary card — any non-string fields are `String()`-coerced at use sites.
+type ApprovalJson = Record<string, string | undefined>;
+
 function parseContext(approval: Approval) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let ctx: Record<string, any> = {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let pol: Record<string, any> = {};
-  try { if (approval.tx_context) ctx = JSON.parse(approval.tx_context); } catch { /* */ }
-  try { if (approval.policy_data) pol = JSON.parse(approval.policy_data); } catch { /* */ }
+  let ctx: ApprovalJson = {};
+  let pol: ApprovalJson = {};
+  try {
+    if (approval.tx_context) {
+      ctx = JSON.parse(approval.tx_context) as ApprovalJson;
+    }
+  } catch {
+    /* ignore malformed context */
+  }
+  try {
+    if (approval.policy_data) {
+      pol = JSON.parse(approval.policy_data) as ApprovalJson;
+    }
+  } catch {
+    /* ignore malformed policy data */
+  }
 
   const at = approval.approval_type ?? '';
   const isPolicyChange = at === 'policy_change';
@@ -155,7 +173,7 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
   const { typeLabel, amount, currency, summary } = parseContext(approval);
 
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className="w-full text-left group relative overflow-hidden rounded-2xl bg-surface-container-low ghost-border hover:border-outline/40 transition-all duration-200 hover:shadow-lg hover:-translate-y-px focus:outline-none focus:ring-2 focus:ring-primary/40"
     >
@@ -270,7 +288,7 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
             </span>
           )}
         </div>
-        <button
+        <button type="button"
           onClick={() => fetchApprovals(true)}
           disabled={refreshing}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50"
@@ -300,7 +318,7 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
           </div>
           <p className="text-on-surface font-semibold mb-1">{t('approvals.loadFailed')}</p>
           <p className="text-on-surface-variant text-sm mb-5">{error}</p>
-          <button
+          <button type="button"
             onClick={() => fetchApprovals()}
             className="px-5 py-2 rounded-xl bg-surface-container-high ghost-border text-sm font-medium text-on-surface hover:border-outline/40 transition-all"
           >

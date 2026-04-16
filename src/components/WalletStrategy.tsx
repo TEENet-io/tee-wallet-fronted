@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { Fingerprint, ShieldCheck, FileCode2, Plus, MoreVertical, BadgeCheck } from 'lucide-react';
 import { useState } from 'react';
 
@@ -15,7 +18,7 @@ export default function WalletStrategy() {
           </div>
           <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-on-surface">Wallet Strategy</h1>
           <p className="text-slate-400 max-w-2xl text-lg">
-            Define the autonomous boundaries for your OpenClaw agent. All actions exceeding these thresholds require Passkey authorization.
+            Define the autonomous boundaries for your agent. All actions exceeding these thresholds require Passkey authorization.
           </p>
         </div>
 
@@ -71,7 +74,7 @@ export default function WalletStrategy() {
                 Your hardware-backed biometric key is currently the sole master executor for all policy overrides.
               </p>
             </div>
-            <button className="w-full mt-8 py-4 rounded-xl bg-surface-container-high text-secondary font-bold text-sm tracking-wide ghost-border hover:bg-surface-variant transition-all">
+            <button type="button" className="w-full mt-8 py-4 rounded-xl bg-surface-container-high text-secondary font-bold text-sm tracking-wide ghost-border hover:bg-surface-variant transition-all">
               Update Keys
             </button>
           </div>
@@ -87,7 +90,7 @@ export default function WalletStrategy() {
               <FileCode2 className="w-6 h-6 text-primary" />
               Whitelisted Contracts
             </h2>
-            <button className="text-secondary text-sm font-bold flex items-center gap-1 hover:opacity-80 transition-opacity">
+            <button type="button" className="text-secondary text-sm font-bold flex items-center gap-1 hover:opacity-80 transition-opacity">
               <Plus className="w-4 h-4" /> Add Custom
             </button>
           </div>
@@ -106,7 +109,7 @@ export default function WalletStrategy() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="px-2.5 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tighter">Pre-Selected</span>
-                <button className="text-slate-600 hover:text-slate-400 transition-colors">
+                <button type="button" className="text-slate-600 hover:text-slate-400 transition-colors">
                   <MoreVertical className="w-5 h-5" />
                 </button>
               </div>
@@ -124,7 +127,7 @@ export default function WalletStrategy() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button className="text-slate-600 hover:text-slate-400 transition-colors">
+                <button type="button" className="text-slate-600 hover:text-slate-400 transition-colors">
                   <MoreVertical className="w-5 h-5" />
                 </button>
               </div>
@@ -142,7 +145,7 @@ export default function WalletStrategy() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button className="text-slate-600 hover:text-slate-400 transition-colors">
+                <button type="button" className="text-slate-600 hover:text-slate-400 transition-colors">
                   <MoreVertical className="w-5 h-5" />
                 </button>
               </div>
@@ -174,7 +177,7 @@ export default function WalletStrategy() {
                   <p className="text-xs text-slate-500">Approved for Uniswap V3</p>
                 </div>
               </div>
-              <button className="px-5 py-2 rounded-xl bg-error/10 text-error text-xs font-bold border border-error/20 hover:bg-error/20 transition-all">
+              <button type="button" className="px-5 py-2 rounded-xl bg-error/10 text-error text-xs font-bold border border-error/20 hover:bg-error/20 transition-all">
                 Revoke
               </button>
             </div>
@@ -195,7 +198,7 @@ export default function WalletStrategy() {
                   <p className="text-xs text-slate-500">Approved for Aave V3</p>
                 </div>
               </div>
-              <button className="px-5 py-2 rounded-xl bg-error/10 text-error text-xs font-bold border border-error/20 hover:bg-error/20 transition-all">
+              <button type="button" className="px-5 py-2 rounded-xl bg-error/10 text-error text-xs font-bold border border-error/20 hover:bg-error/20 transition-all">
                 Revoke
               </button>
             </div>
@@ -216,12 +219,12 @@ export default function WalletStrategy() {
                   <p className="text-xs text-slate-500">Approved for Lido</p>
                 </div>
               </div>
-              <button className="px-5 py-2 rounded-xl bg-error/10 text-error text-xs font-bold border border-error/20 hover:bg-error/20 transition-all">
+              <button type="button" className="px-5 py-2 rounded-xl bg-error/10 text-error text-xs font-bold border border-error/20 hover:bg-error/20 transition-all">
                 Revoke
               </button>
             </div>
             
-            <button className="w-full py-5 rounded-2xl bg-surface-container-high text-on-surface font-bold text-sm border-dashed border-2 border-white/10 hover:border-primary/50 hover:bg-surface-variant transition-all">
+            <button type="button" className="w-full py-5 rounded-2xl bg-surface-container-high text-on-surface font-bold text-sm border-dashed border-2 border-white/10 hover:border-primary/50 hover:bg-surface-variant transition-all">
               + New Approval Strategy
             </button>
           </div>

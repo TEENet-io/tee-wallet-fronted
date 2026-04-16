@@ -1,5 +1,8 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback, type ChangeEvent, type FormEvent } from 'react';
-import { Shield, Loader2, Save, Trash2, Fuel } from 'lucide-react';
+import { Shield, Loader2, Save, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';

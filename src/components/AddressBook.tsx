@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { ArrowLeft, BookUser, Plus, Pencil, Trash2, Loader2, Search, Inbox } from 'lucide-react';
 import { api } from '../lib/api';
@@ -149,7 +152,7 @@ export default function AddressBook({ onBack }: AddressBookProps) {
       <ConfirmDialog />
 
       {/* Back */}
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group">
+      <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         {t('addressBook.back')}
       </button>
@@ -165,7 +168,7 @@ export default function AddressBook({ onBack }: AddressBookProps) {
             </span>
           )}
         </div>
-        <button
+        <button type="button"
           onClick={openAdd}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
         >
@@ -292,14 +295,14 @@ export default function AddressBook({ onBack }: AddressBookProps) {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <button
+                  <button type="button"
                     onClick={() => openEdit(entry)}
                     title={t('addressBook.edit')}
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-primary hover:bg-primary/10 transition-all"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleDelete(entry)}
                     disabled={isDeleting}
                     title={t('addressBook.delete')}

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react';
 import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, Pencil, X, Trash2 } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
@@ -203,7 +206,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   if (loading && wallets.length === 0) {
     return (
       <div className="animate-in fade-in duration-500 space-y-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
+        <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
           <ArrowLeft className="w-4 h-4" /> {t('wallet.back')}
         </button>
         <div className="bg-surface-container-low rounded-3xl p-8 ghost-border">
@@ -219,12 +222,12 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   if (!wallet) {
     return (
       <div className="animate-in fade-in duration-500 space-y-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
+        <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors">
           <ArrowLeft className="w-4 h-4" /> {t('wallet.back')}
         </button>
         <div className="bg-surface-container-low rounded-3xl p-12 ghost-border flex flex-col items-center justify-center gap-4 text-center">
           <p className="font-headline font-bold text-on-surface text-xl">{t('wallet.notFound')}</p>
-          <button onClick={onBack} className="mt-2 px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold hover:opacity-90 transition-all">
+          <button type="button" onClick={onBack} className="mt-2 px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold hover:opacity-90 transition-all">
             {t('wallet.back')}
           </button>
         </div>
@@ -235,7 +238,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       {/* Back */}
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group">
+      <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         {t('wallet.back')}
       </button>
@@ -297,7 +300,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
               <code className="text-xs text-on-surface-variant font-mono bg-surface-container-high px-3 py-1.5 rounded-lg ghost-border break-all">
                 {wallet.address}
               </code>
-              <button onClick={handleCopy} title={t('wallet.copyAddress')} className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
+              <button type="button" onClick={handleCopy} title={t('wallet.copyAddress')} className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
@@ -309,7 +312,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
                 <code className="text-xs text-on-surface-variant font-mono bg-surface-container-high px-3 py-1.5 rounded-lg ghost-border break-all">
                   {pubkey}
                 </code>
-                <button onClick={handleCopyPubkey} title={t('wallet.pubkey')} className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
+                <button type="button" onClick={handleCopyPubkey} title={t('wallet.pubkey')} className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border">
                   {pubkeyCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
@@ -327,7 +330,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
                   </p>
                 )}
               </div>
-              <button onClick={handleRefresh} disabled={refreshing} title={t('wallets.refreshBalance')} className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border disabled:opacity-50">
+              <button type="button" onClick={handleRefresh} disabled={refreshing} title={t('wallets.refreshBalance')} className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-outline hover:text-secondary hover:bg-surface-variant transition-all ghost-border disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
@@ -337,7 +340,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
 
       {/* Tab bar — only 2 tabs */}
       <div className="flex gap-1 p-1 bg-surface-container-low rounded-2xl ghost-border">
-        <button
+        <button type="button"
           onClick={() => setActiveTab('policy')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
             activeTab === 'policy'
@@ -348,7 +351,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           <SlidersHorizontal className="w-4 h-4" />
           {t('wallet.tab.threshold')}
         </button>
-        <button
+        <button type="button"
           onClick={() => setActiveTab('program')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
             activeTab === 'program'
@@ -374,7 +377,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
             <p className="text-sm font-bold text-error">{t('wallets.deleteWallet')}</p>
             <p className="text-xs text-on-surface-variant mt-0.5">{t('wallets.deleteConfirm')}</p>
           </div>
-          <button
+          <button type="button"
             onClick={handleDelete}
             disabled={deleting}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-error/10 border border-error/30 text-error text-sm font-bold hover:bg-error/20 transition-all disabled:opacity-50 flex-shrink-0"

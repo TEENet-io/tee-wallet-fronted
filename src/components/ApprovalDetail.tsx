@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type { ComponentType } from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -54,12 +57,6 @@ function riskColorClass(level?: string): string {
   return 'text-tertiary border-tertiary/20';
 }
 
-function riskBorderFull(level?: string): string {
-  if (level === 'low') return 'border-green-400';
-  if (level === 'high') return 'border-red-400';
-  return 'border-tertiary';
-}
-
 function riskTitleKey(level?: string): string {
   if (level === 'low') return 'approval.lowRisk';
   if (level === 'high') return 'approval.highRisk';
@@ -77,25 +74,64 @@ function statusColors(status: Approval['status']) {
 // Context rows — parses tx_context / policy_data for full detail
 // ---------------------------------------------------------------------------
 
-function Row({ icon: Icon, label, value, mono }: { icon: ComponentType<{ className?: string }>; label: string; value: string; mono?: boolean }) {
+// Row accepts `unknown` for `value` so it can render arbitrary JSON blob
+// fields parsed from `tx_context` / `policy_data`. Arrays and plain objects
+// are rendered via their JSON form; primitives via `String()`.
+function renderValue(v: unknown): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return String(v);
+  }
+}
+
+function Row({
+  icon: Icon,
+  label,
+  value,
+  mono,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: unknown;
+  mono?: boolean;
+}) {
   return (
     <div className="flex items-start gap-3 p-4">
       <Icon className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
       <div className="min-w-0">
         <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{label}</p>
-        <p className={`text-sm text-on-surface ${mono ? 'font-mono break-all text-xs' : ''}`}>{value}</p>
+        <p className={`text-sm text-on-surface ${mono ? 'font-mono break-all text-xs' : ''}`}>
+          {renderValue(value)}
+        </p>
       </div>
     </div>
   );
 }
 
+// Backend-typed JSON blobs. Fields are optional strings/numbers/arrays —
+// we trust the server shape and just read whatever fields are present.
+type ApprovalJson = Record<
+  string,
+  string | number | boolean | string[] | Record<string, unknown> | undefined
+>;
+
 function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let ctx: Record<string, any> = {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let pol: Record<string, any> = {};
-  try { if (approval.tx_context) ctx = JSON.parse(approval.tx_context); } catch { /* ignore */ }
-  try { if (approval.policy_data) pol = JSON.parse(approval.policy_data); } catch { /* ignore */ }
+  let ctx: ApprovalJson = {};
+  let pol: ApprovalJson = {};
+  try {
+    if (approval.tx_context) ctx = JSON.parse(approval.tx_context) as ApprovalJson;
+  } catch {
+    /* ignore malformed context */
+  }
+  try {
+    if (approval.policy_data) pol = JSON.parse(approval.policy_data) as ApprovalJson;
+  } catch {
+    /* ignore malformed policy data */
+  }
 
   const approvalType = approval.approval_type ?? '';
   const isPolicyChange = approvalType === 'policy_change';
@@ -353,7 +389,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
   if (error || !approval) {
     return (
       <div className="animate-in fade-in duration-500">
-        <button
+        <button type="button"
           onClick={onBack}
           className="mb-8 flex items-center gap-2 text-slate-400 cursor-pointer group w-fit hover:text-on-surface transition-colors"
         >
@@ -366,7 +402,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
           </div>
           <p className="text-on-surface font-semibold mb-1">{t('approval.loadError')}</p>
           <p className="text-on-surface-variant text-sm mb-5">{error ?? t('approval.unknownError')}</p>
-          <button
+          <button type="button"
             onClick={fetchApproval}
             className="px-5 py-2 rounded-xl bg-surface-container-high ghost-border text-sm font-medium text-on-surface hover:border-outline/40 transition-all"
           >
@@ -381,18 +417,23 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
   const sc = statusColors(approval.status);
   const busy = approving || rejecting;
 
-  // Parse tx_context for header display
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let headerCtx: Record<string, any> = {};
-  try { if (approval.tx_context) headerCtx = JSON.parse(approval.tx_context); } catch { /* */ }
-  const displayAmount = headerCtx.amount || approval.amount;
-  const displayCurrency = headerCtx.currency || headerCtx.symbol || approval.currency;
-  const displayAction = (approval.action ?? '').replace(/_/g, ' ');
+  // Parse tx_context for header display.
+  let headerCtx: Record<string, unknown> = {};
+  try {
+    if (approval.tx_context) headerCtx = JSON.parse(approval.tx_context) as Record<string, unknown>;
+  } catch {
+    /* ignore malformed context */
+  }
+  const displayAmount = (headerCtx.amount as string | undefined) ?? approval.amount;
+  const displayCurrency =
+    (headerCtx.currency as string | undefined) ??
+    (headerCtx.symbol as string | undefined) ??
+    approval.currency;
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       {/* Back */}
-      <button
+      <button type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors group"
       >
@@ -488,7 +529,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
       {/* Action Buttons */}
       {isPending ? (
         <div className="bg-surface-container-high rounded-2xl ghost-border p-5 space-y-3">
-          <button
+          <button type="button"
             onClick={handleApprove}
             disabled={busy}
             className="w-full py-3.5 rounded-xl primary-gradient text-white font-bold flex items-center justify-center gap-2 shadow-[0_8px_30px_rgba(124,58,237,0.3)] hover:shadow-[0_12px_40px_rgba(124,58,237,0.5)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -496,7 +537,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             {approving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Fingerprint className="w-5 h-5" />}
             {approving ? t('approval.verifying') : t('approval.authorize')}
           </button>
-          <button
+          <button type="button"
             onClick={handleReject}
             disabled={busy}
             className="w-full py-3 rounded-xl bg-surface-container border border-outline-variant/20 text-error/80 hover:text-error hover:bg-error/10 hover:border-error/30 active:scale-[0.98] transition-all text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -522,7 +563,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
             {approval.status === 'approved' ? t('approval.txAuthorized') :
              approval.status === 'rejected' ? t('approval.txRejected') : t('approval.txExpired')}
           </p>
-          <button onClick={onBack} className="px-6 py-2 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface text-sm font-medium transition-all">
+          <button type="button" onClick={onBack} className="px-6 py-2 rounded-xl bg-surface-container ghost-border text-on-surface-variant hover:text-on-surface text-sm font-medium transition-all">
             {t('approval.backToApprovals')}
           </button>
         </div>

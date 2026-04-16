@@ -1,9 +1,12 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import {
   Terminal, Bot, KeyRound, Radio, Ban,
   LogOut, Trash2, Fingerprint, Copy, Check,
-  Link2, ChevronDown, ChevronUp, Plus, X,
-  UserPlus, Pencil, BookUser, Search, Loader2,
+  ChevronUp, Plus, X,
+  Pencil, BookUser, Search, Loader2,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +14,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from './ConfirmDialog';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useWallets } from '../contexts/WalletContext';
-import type { APIKey, ChainConfig, AddressBookEntry } from '../types';
+import type { APIKey, AddressBookEntry } from '../types';
 
 // Maps a key index to one of the decorative icons used in the original design.
 const KEY_ICONS = [Terminal, Bot, Radio, KeyRound];
@@ -41,18 +44,6 @@ function maskKey(raw: string): string {
   return `ocw_••••••••${suffix}`;
 }
 
-// Truncate long URLs for display.
-function truncateUrl(url: string, maxLen = 48): string {
-  if (url.length <= maxLen) return url;
-  return `${url.slice(0, maxLen)}…`;
-}
-
-interface InviteResult {
-  register_url: string;
-  invite_token: string;
-  expires_at: string;
-}
-
 interface SecuritySettingsProps {
   onNavigateHome: () => void;
 }
@@ -62,7 +53,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useLanguage();
-  const { chainsMap, loadChains } = useWallets();
+  const { chainsMap } = useWallets();
 
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [keysLoading, setKeysLoading] = useState(true);
@@ -85,23 +76,6 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   const [renameLabel, setRenameLabel] = useState('');
 
   // ---------------------------------------------------------------------------
-  // Chain Manager state
-  // ---------------------------------------------------------------------------
-  const [showAddChain, setShowAddChain] = useState(false);
-  const [chainName, setChainName] = useState('');
-  const [chainLabel, setChainLabel] = useState('');
-  const [chainCurrency, setChainCurrency] = useState('');
-  const [chainRpc, setChainRpc] = useState('');
-  const [chainIdVal, setChainIdVal] = useState('');
-  const [addingChain, setAddingChain] = useState(false);
-  const [deletingChain, setDeletingChain] = useState<string | null>(null);
-
-  // Derive the list of custom chains from the context map.
-  const customChains = (Object.values(chainsMap) as (ChainConfig & { custom?: boolean })[]).filter(
-    c => c.custom === true || c.is_custom === true,
-  );
-
-  // ---------------------------------------------------------------------------
   // Address Book state
   // ---------------------------------------------------------------------------
   const [abEntries, setAbEntries] = useState<AddressBookEntry[]>([]);
@@ -117,17 +91,6 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   const [abDeletingId, setAbDeletingId] = useState<number | null>(null);
 
   const chainNames = Object.keys(chainsMap);
-
-  // ---------------------------------------------------------------------------
-  // Invite User state
-  // ---------------------------------------------------------------------------
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [inviteDisplayName, setInviteDisplayName] = useState('');
-  const [inviteExpiry, setInviteExpiry] = useState('86400');
-  const [generatingInvite, setGeneratingInvite] = useState(false);
-  const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
-  const [copiedInviteUrl, setCopiedInviteUrl] = useState(false);
-  const [copiedInviteToken, setCopiedInviteToken] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Address Book handlers
@@ -329,118 +292,6 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
   }
 
   // ---------------------------------------------------------------------------
-  // Chain Manager — add chain
-  // ---------------------------------------------------------------------------
-  async function handleAddChain(e: FormEvent) {
-    e.preventDefault();
-    setAddingChain(true);
-    try {
-      const passkeyBody = await auth.getFreshPasskeyCredential();
-      if (!passkeyBody) return;
-
-      const res = await api('/api/chains', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...passkeyBody,
-          name: chainName.trim(),
-          label: chainLabel.trim(),
-          currency: chainCurrency.trim(),
-          rpc_url: chainRpc.trim(),
-          chain_id: chainIdVal ? Number(chainIdVal) : undefined,
-        }),
-      });
-
-      if (!res.success) {
-        toast(res.error || t('settings.chainAdded'), 'error');
-        return;
-      }
-
-      toast(t('settings.chainAdded'), 'success');
-      setChainName('');
-      setChainLabel('');
-      setChainCurrency('');
-      setChainRpc('');
-      setChainIdVal('');
-      setShowAddChain(false);
-      await loadChains();
-    } finally {
-      setAddingChain(false);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Chain Manager — delete chain
-  // ---------------------------------------------------------------------------
-  async function handleDeleteChain(chain: ChainConfig) {
-    const ok = await confirm({
-      title: t('settings.chainDeleteConfirm'),
-      message: t('settings.chainDeleteConfirm'),
-      confirmText: t('wallets.deleteBtn'),
-      danger: true,
-    });
-    if (!ok) return;
-
-    setDeletingChain(chain.name);
-    try {
-      const passkeyBody = await auth.getFreshPasskeyCredential();
-      if (!passkeyBody) return;
-
-      const res = await api(`/api/chains/${chain.name}`, {
-        method: 'DELETE',
-        body: JSON.stringify(passkeyBody),
-      });
-
-      if (!res.success) {
-        toast(res.error || t('settings.chainDeleted'), 'error');
-        return;
-      }
-
-      toast(t('settings.chainDeleted'), 'success');
-      await loadChains();
-    } finally {
-      setDeletingChain(null);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Invite User — generate invite
-  // ---------------------------------------------------------------------------
-  async function handleGenerateInvite(e: FormEvent) {
-    e.preventDefault();
-    setGeneratingInvite(true);
-    setInviteResult(null);
-    try {
-      const res = await api<{ register_url?: string; invite_token?: string; expires_at?: string }>(
-        '/api/auth/invite',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            display_name: inviteDisplayName.trim(),
-            expires_in_seconds: inviteExpiry ? Number(inviteExpiry) : 86400,
-          }),
-        },
-      );
-
-      if (!res.success || !res.register_url || !res.invite_token) {
-        toast(res.error || t('settings.inviteSuccess'), 'error');
-        return;
-      }
-
-      setInviteResult({
-        register_url: res.register_url,
-        invite_token: res.invite_token,
-        expires_at: res.expires_at ?? '',
-      });
-      toast(t('settings.inviteSuccess'), 'success');
-      setShowInviteForm(false);
-      setInviteDisplayName('');
-      setInviteExpiry('86400');
-    } finally {
-      setGeneratingInvite(false);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   // Copy helpers
   // ---------------------------------------------------------------------------
   async function handleCopyNewKey() {
@@ -448,20 +299,6 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
     await navigator.clipboard.writeText(newKeySnippet);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  async function handleCopyInviteUrl() {
-    if (!inviteResult) return;
-    await navigator.clipboard.writeText(inviteResult.register_url);
-    setCopiedInviteUrl(true);
-    setTimeout(() => setCopiedInviteUrl(false), 2000);
-  }
-
-  async function handleCopyInviteToken() {
-    if (!inviteResult) return;
-    await navigator.clipboard.writeText(inviteResult.invite_token);
-    setCopiedInviteToken(true);
-    setTimeout(() => setCopiedInviteToken(false), 2000);
   }
 
   // ---------------------------------------------------------------------------
@@ -520,7 +357,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                 {t('settings.newKeyWarning')}
               </p>
             </div>
-            <button
+            <button type="button"
               onClick={handleCopyNewKey}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/20 text-secondary text-sm font-semibold hover:bg-secondary/30 transition-colors"
             >
@@ -546,7 +383,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
               className="flex-1 bg-surface-container border border-outline-variant/20 rounded-lg px-3 py-2 text-sm text-on-surface placeholder:text-outline outline-none focus:border-primary transition-colors"
               disabled={generating}
             />
-            <button
+            <button type="button"
               onClick={handleGenerateKey}
               disabled={generating}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
@@ -595,7 +432,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                       <div className="p-3 rounded-xl bg-surface-container-high">
                         <Icon className="w-6 h-6 text-primary" />
                       </div>
-                      <button
+                      <button type="button"
                         onClick={() => handleRevokeKey(key)}
                         disabled={isRevoking}
                         className="text-slate-500 hover:text-error transition-colors p-2 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -624,7 +461,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                         <h3 className="font-semibold text-on-surface truncate">
                           {key.label || key.prefix}
                         </h3>
-                        <button
+                        <button type="button"
                           onClick={() => startRename(key)}
                           className="shrink-0 w-5 h-5 flex items-center justify-center text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
                           title={t('settings.rename')}
@@ -684,8 +521,11 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
               </h2>
               <p className="text-sm text-slate-500">{t('addressBook.subtitle')}</p>
             </div>
-            <button
-              onClick={() => { showAbForm ? setShowAbForm(false) : openAbAdd(); }}
+            <button type="button"
+              onClick={() => {
+                if (showAbForm) setShowAbForm(false);
+                else openAbAdd();
+              }}
               className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-container-high text-on-surface text-sm font-semibold hover:bg-surface-container transition-colors"
             >
               {showAbForm ? (
@@ -772,11 +612,11 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => openAbEdit(entry)} title={t('addressBook.edit')}
+                    <button type="button" onClick={() => openAbEdit(entry)} title={t('addressBook.edit')}
                       className="p-2 text-slate-500 hover:text-primary transition-colors">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleAbDelete(entry)} disabled={abDeletingId === entry.id} title={t('addressBook.delete')}
+                    <button type="button" onClick={() => handleAbDelete(entry)} disabled={abDeletingId === entry.id} title={t('addressBook.delete')}
                       className="p-2 text-slate-500 hover:text-error transition-colors disabled:opacity-40">
                       {abDeletingId === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
                     </button>
@@ -796,7 +636,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                 {t('settings.dangerZone')}
               </p>
               <div className="flex flex-wrap gap-3">
-                <button
+                <button type="button"
                   onClick={handleLogoutGlobal}
                   disabled={dangerLoading}
                   className="px-4 py-2 rounded-lg bg-surface-container-highest text-sm font-medium text-on-surface hover:bg-surface-variant transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -804,7 +644,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
                   <LogOut className="w-4 h-4" />
                   {dangerLoading ? t('settings.working') : t('settings.logoutGlobal')}
                 </button>
-                <button
+                <button type="button"
                   onClick={handleDeleteAccount}
                   disabled={dangerLoading}
                   className="px-4 py-2 rounded-lg border border-error/20 text-sm font-medium text-error hover:bg-error/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

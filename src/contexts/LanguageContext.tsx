@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import en from '../i18n/en';
 import zh from '../i18n/zh';

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
@@ -156,7 +159,7 @@ export default function AuditHistory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-on-surface">{t('history.title')}</h1>
-        <button
+        <button type="button"
           onClick={() => fetchLogs(page, actionFilter, walletFilter, true)}
           disabled={refreshing || loading}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50"
@@ -218,7 +221,7 @@ export default function AuditHistory() {
       ) : error ? (
         <div className="text-center py-12">
           <p className="text-on-surface-variant text-sm mb-3">{error}</p>
-          <button
+          <button type="button"
             onClick={() => fetchLogs(page, actionFilter, walletFilter)}
             className="text-sm text-primary hover:underline"
           >
@@ -241,17 +244,22 @@ export default function AuditHistory() {
                 {dateLogs.map(log => {
                   const isExpanded = expandedId === String(log.id);
                   const summary = detailSummary(log.details);
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  let detailsObj: Record<string, any> = {};
+                  let detailsObj: Record<string, unknown> = {};
                   if (log.details) {
-                    try { detailsObj = JSON.parse(log.details); } catch { /* skip */ }
+                    try {
+                      detailsObj = JSON.parse(log.details) as Record<string, unknown>;
+                    } catch {
+                      /* ignore malformed details */
+                    }
                   }
                   const fullDetails = Object.entries(detailsObj);
                   const hasApproval = !!log.approved_at;
-                  const dailyLimit = detailsObj.daily_limit_usd;
+                  const dailyLimitRaw = detailsObj.daily_limit_usd;
+                  const dailyLimit =
+                    dailyLimitRaw == null ? '' : String(dailyLimitRaw);
 
                   return (
-                    <button
+                    <button type="button"
                       key={log.id}
                       onClick={() => setExpandedId(isExpanded ? null : String(log.id))}
                       className="w-full text-left flex gap-3 px-3 py-2 rounded-lg hover:bg-surface-container-high/50 transition-colors group"
@@ -357,14 +365,14 @@ export default function AuditHistory() {
             {totalPages !== null ? `${page} / ${totalPages}` : `${t('history.page')} ${page}`}
           </span>
           <div className="flex gap-1">
-            <button
+            <button type="button"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={!canPrev}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button
+            <button type="button"
               onClick={() => setPage(p => p + 1)}
               disabled={!canNext}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30"

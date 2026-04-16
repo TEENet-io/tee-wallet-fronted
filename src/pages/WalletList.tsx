@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useMemo, type MouseEvent } from 'react';
 import { Plus, Wallet, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
@@ -108,7 +111,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
 
       {/* Create Wallet Card */}
       <section>
-        <button
+        <button type="button"
           onClick={() => setCreateOpen(prev => !prev)}
           className="w-full flex items-center justify-between px-6 py-4 bg-surface-container-low rounded-2xl ghost-border hover:bg-surface-container transition-all duration-200 group"
         >
@@ -186,13 +189,13 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
             </div>
 
             <div className="flex gap-3 pt-1">
-              <button
+              <button type="button"
                 onClick={() => setCreateOpen(false)}
                 className="flex-1 py-3 rounded-xl bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-variant transition-colors"
               >
                 {t('common.cancel')}
               </button>
-              <button
+              <button type="button"
                 onClick={handleCreate}
                 disabled={creating || !effectiveChain}
                 className="flex-1 py-3 rounded-xl primary-gradient text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -243,7 +246,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                 {t('wallets.emptyDescFull')}
               </p>
             </div>
-            <button
+            <button type="button"
               onClick={() => setCreateOpen(true)}
               className="mt-2 px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:opacity-90 transition-all flex items-center gap-2"
             >
@@ -306,7 +309,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                     )}
 
                     {wallet.status === 'ready' && (
-                      <button
+                      <button type="button"
                         onClick={e => handleRefresh(e, wallet.id)}
                         disabled={isRefreshing}
                         title={t('wallets.refreshBalance')}

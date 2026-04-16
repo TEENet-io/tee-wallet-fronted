@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type { ChainConfig } from '../types';
 
 // Chains the backend doesn't tag mainnet/testnet explicitly, so classify

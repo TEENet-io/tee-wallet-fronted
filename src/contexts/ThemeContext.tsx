@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 type Theme = 'dark' | 'light';

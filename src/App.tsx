@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useEffect, useCallback } from 'react';
 import { Shield, Wallet, ShieldCheck, Activity, Settings, Sun, Moon, Languages } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
@@ -102,12 +105,12 @@ export default function App() {
         </div>
         <div className="flex items-center gap-1">
           <div className="hidden md:flex gap-1 items-center mr-2">
-            <button onClick={nav.wallets} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('wallet') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.wallets')}</button>
-            <button onClick={nav.approvals} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('approval') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.approvals')}</button>
-            <button onClick={nav.history} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'history' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.activity')}</button>
+            <button type="button" onClick={nav.wallets} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('wallet') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.wallets')}</button>
+            <button type="button" onClick={nav.approvals} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('approval') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.approvals')}</button>
+            <button type="button" onClick={nav.history} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'history' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.activity')}</button>
           </div>
 
-          <button
+          <button type="button"
             onClick={toggleLang}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors"
             title={lang === 'en' ? '切换中文' : 'Switch to English'}
@@ -115,7 +118,7 @@ export default function App() {
             <Languages className="w-4 h-4 text-on-surface-variant" />
           </button>
 
-          <button
+          <button type="button"
             onClick={toggleTheme}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors"
             title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
@@ -123,7 +126,7 @@ export default function App() {
             {theme === 'dark' ? <Sun className="w-4 h-4 text-on-surface-variant" /> : <Moon className="w-4 h-4 text-on-surface-variant" />}
           </button>
 
-          <button onClick={nav.settings} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+          <button type="button" onClick={nav.settings} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
             <Settings className="w-4 h-4 text-on-surface-variant" />
           </button>
         </div>
@@ -136,19 +139,19 @@ export default function App() {
 
       {/* Bottom Nav (Mobile) */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10">
-        <button onClick={nav.wallets} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${isActive('wallet') ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <button type="button" onClick={nav.wallets} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${isActive('wallet') ? 'text-primary' : 'text-on-surface-variant'}`}>
           <Wallet className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] font-medium">{t('nav.wallets')}</span>
         </button>
-        <button onClick={nav.approvals} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${isActive('approval') ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <button type="button" onClick={nav.approvals} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${isActive('approval') ? 'text-primary' : 'text-on-surface-variant'}`}>
           <ShieldCheck className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] font-medium">{t('nav.approvals')}</span>
         </button>
-        <button onClick={nav.history} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${currentPage === 'history' ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <button type="button" onClick={nav.history} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${currentPage === 'history' ? 'text-primary' : 'text-on-surface-variant'}`}>
           <Activity className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] font-medium">{t('nav.activity')}</span>
         </button>
-        <button onClick={nav.settings} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${currentPage === 'settings' ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <button type="button" onClick={nav.settings} className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${currentPage === 'settings' ? 'text-primary' : 'text-on-surface-variant'}`}>
           <Settings className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] font-medium">{t('nav.settings')}</span>
         </button>

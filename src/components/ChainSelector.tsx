@@ -1,3 +1,6 @@
+// Copyright (C) 2026 TEENet
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import type { ChainConfig } from '../types';
@@ -75,7 +78,7 @@ export default function ChainSelector({ chains, value, onChange, network }: Chai
                   EVM Chains
                 </div>
                 {evmChains.map(c => (
-                  <button
+                  <button type="button"
                     key={c.name}
                     onClick={() => { onChange(c.name); setOpen(false); setSearch(''); }}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-container-high transition-colors ${
@@ -97,7 +100,7 @@ export default function ChainSelector({ chains, value, onChange, network }: Chai
                   Solana
                 </div>
                 {solanaChains.map(c => (
-                  <button
+                  <button type="button"
                     key={c.name}
                     onClick={() => { onChange(c.name); setOpen(false); setSearch(''); }}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-container-high transition-colors ${
