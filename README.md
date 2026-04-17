@@ -17,77 +17,11 @@ React frontend for **TEENet Wallet** — a secure multi-chain wallet powered by 
 - Dark / Light theme
 - English / Simplified Chinese i18n
 
-## Tech Stack
-
-- React 19 + TypeScript 5.8 (`strict: true`)
-- Tailwind CSS v4 (CSS-first config in `src/index.css`)
-- Vite 6
-- ESLint 9 + Prettier 3
-
-## Browser Support
-
-Modern evergreen browsers with WebAuthn platform-authenticator support:
-
-- Chrome / Edge ≥ 109
-- Safari ≥ 16.4 (macOS 13+, iOS 16.4+)
-- Firefox ≥ 122
-
-This project targets **ES2022**. No legacy polyfills are shipped.
-
-## Quick Start
-
-```bash
-# Node 20+ required (see .nvmrc)
-nvm use
-
-npm install
-npm run dev        # dev server on http://127.0.0.1:3000
-```
-
-## Scripts
-
-```bash
-npm run dev          # vite dev server
-npm run build        # production build -> dist/
-npm run typecheck    # tsc --noEmit
-npm run lint         # eslint . && tsc --noEmit
-npm run format       # prettier --write .
-```
-
-Source maps are **disabled** in production builds — see `vite.config.ts`.
-
-## Runtime Configuration
-
-The frontend resolves its API base URL at runtime from the current page path (`src/lib/api.ts`). This lets the same bundle be mounted under any sub-path of the host (e.g. `/instance/<id>/`). No build-time `.env` variables are required.
-
+  
 ## Deployment
 
 This frontend is designed to be served by the [teenet-wallet](https://github.com/TEENet-io/teenet-wallet) Go backend. The backend serves `dist/` as static files and proxies API requests under the same origin.
 
-### As a git submodule
-
-The backend includes this repo as a submodule at `frontend-src/`. To build the Docker image with the frontend included:
-
-```bash
-cd teenet-wallet
-./export.sh
-```
-
-### Standalone
-
-```bash
-npm run build
-# Copy dist/ to the backend's frontend/ directory.
-```
-
-## Supported Chains
-
-Chains are configured by the backend and fetched at runtime via `GET /api/chains`. Built-in defaults include:
-
-- **EVM**: Ethereum, Sepolia, Holesky, Optimism, Base Sepolia, BSC Testnet
-- **Solana**: Mainnet, Devnet
-
-To add or change chains, edit `chains.json` on the backend.
 
 ## Project Layout
 
