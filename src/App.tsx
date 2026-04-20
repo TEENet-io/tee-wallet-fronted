@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Wallet, ShieldCheck, Activity, Settings, Sun, Moon, Languages } from 'lucide-react';
+import { Shield, Wallet, ShieldCheck, Activity, Settings, Sun, Moon, Languages, KeyRound, BookUser } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
@@ -111,18 +111,9 @@ export default function App() {
     <div className="min-h-screen bg-surface text-on-surface font-body selection:bg-primary/20 relative">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-14 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/10">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2.5">
-            <Shield className="w-5 h-5 text-primary" />
-            <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">TEENet Wallet</span>
-          </div>
-          <nav className="hidden md:flex gap-1 items-center">
-            <button type="button" onClick={nav.wallets} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('wallet') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.wallets')}</button>
-            <button type="button" onClick={nav.approvals} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('approval') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.approvals')}</button>
-            <button type="button" onClick={nav.history} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'history' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.activity')}</button>
-            <button type="button" onClick={nav.apiKeys} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'api-keys' || currentPage === 'settings' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.apiKeys')}</button>
-            <button type="button" onClick={nav.addressBook} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'address-book' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.addressBook')}</button>
-          </nav>
+        <div className="flex items-center gap-2.5">
+          <Shield className="w-5 h-5 text-primary" />
+          <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">TEENet Wallet</span>
         </div>
         <div className="flex items-center gap-1">
           <button type="button"
@@ -147,9 +138,35 @@ export default function App() {
         </div>
       </header>
 
+      {/* Sidebar (Desktop) */}
+      <aside className="hidden md:flex fixed left-0 top-14 bottom-0 w-56 flex-col gap-1 px-3 py-6 border-r border-outline-variant/10 bg-surface/60 backdrop-blur-xl z-40">
+        {[
+          { key: 'wallet', onClick: nav.wallets, icon: Wallet, label: t('nav.wallets'), active: isActive('wallet') },
+          { key: 'approval', onClick: nav.approvals, icon: ShieldCheck, label: t('nav.approvals'), active: isActive('approval') },
+          { key: 'history', onClick: nav.history, icon: Activity, label: t('nav.activity'), active: currentPage === 'history' },
+          { key: 'api-keys', onClick: nav.apiKeys, icon: KeyRound, label: t('nav.apiKeys'), active: currentPage === 'api-keys' || currentPage === 'settings' },
+          { key: 'address-book', onClick: nav.addressBook, icon: BookUser, label: t('nav.addressBook'), active: currentPage === 'address-book' },
+        ].map(item => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={item.onClick}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${item.active ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </aside>
+
       {/* Main Content */}
-      <main className="pt-20 pb-28 px-4 sm:px-6 max-w-4xl mx-auto">
-        {content}
+      <main className="pt-20 pb-28 px-4 sm:px-6 md:pl-64 md:pr-6 max-w-4xl md:max-w-none md:mr-0 mx-auto md:mx-0 md:w-auto">
+        <div className="md:max-w-4xl md:mx-auto">
+          {content}
+        </div>
       </main>
 
       {/* Bottom Nav (Mobile) */}
