@@ -10,6 +10,7 @@ import { useToast } from '../contexts/ToastContext';
 import { api } from '../lib/api';
 import type { DailySpent } from '../types';
 import PolicyPanel from '../components/wallet/PolicyPanel';
+import ProgramPanel from '../components/wallet/ProgramPanel';
 
 function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
   const { t } = useLanguage();
@@ -334,9 +335,16 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
         </div>
       </div>
 
-      {/* Policy panel (whitelist moved to its own top-level page, since
-          contract allowlists are scoped per-chain, not per-wallet). */}
+      {/* Policy panel — genuinely per-wallet. */}
       <PolicyPanel walletId={wallet.id} dailySpent={dailySpent} onPolicyChange={refreshDailySpent} />
+
+      {/* Whitelist panel — chain-scoped, accessed via the sidebar on
+          desktop. Kept inline here for mobile users since the sidebar
+          is hidden on small screens. The panel itself surfaces the
+          chain-shared nature via its own hint text. */}
+      <div className="md:hidden">
+        <ProgramPanel walletId={wallet.id} chainFamily={family} chainName={wallet.chain} />
+      </div>
 
       {/* Danger Zone */}
       <div className="rounded-2xl ghost-border border-error/20 bg-error/5 p-5">
