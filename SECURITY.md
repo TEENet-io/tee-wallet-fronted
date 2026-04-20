@@ -8,7 +8,7 @@ TEENet Wallet is a cryptocurrency wallet frontend. Vulnerabilities — especiall
 
 Instead, report privately via one of:
 
-1. **GitHub Security Advisory** — use the "Report a vulnerability" button at <https://github.com/TEENet-io/tee-wallet-frontend/security/advisories/new>.
+1. **GitHub Security Advisory** — use the "Report a vulnerability" button at <https://github.com/TEENet-io/teenet-wallet-frontend/security/advisories/new>.
 2. **Email** — `security@teenet.io` with subject line `[TEENet Wallet Frontend] <short description>`.
 
 When reporting, please include:
@@ -29,7 +29,7 @@ When reporting, please include:
 
 In scope:
 
-- This repository (`tee-wallet-frontend`)
+- This repository (`teenet-wallet-frontend`)
 - The passkey / WebAuthn authentication flow
 - The approval-queue UI
 - Any client-side cryptography or data-validation path

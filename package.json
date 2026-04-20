@@ -1,16 +1,16 @@
 {
-  "name": "tee-wallet-frontend",
+  "name": "teenet-wallet-frontend",
   "version": "0.1.0",
   "description": "Secure multi-chain wallet frontend powered by TEE hardware. Maintained by TEENet.",
   "license": "GPL-3.0-or-later",
   "author": "TEENet",
-  "homepage": "https://github.com/TEENet-io/tee-wallet-frontend",
+  "homepage": "https://github.com/TEENet-io/teenet-wallet-frontend",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TEENet-io/tee-wallet-frontend.git"
+    "url": "https://github.com/TEENet-io/teenet-wallet-frontend.git"
   },
   "bugs": {
-    "url": "https://github.com/TEENet-io/tee-wallet-frontend/issues"
+    "url": "https://github.com/TEENet-io/teenet-wallet-frontend/issues"
   },
   "keywords": [
     "wallet",
