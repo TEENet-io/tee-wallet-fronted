@@ -250,7 +250,7 @@ export default function AddressBook({ onBack }: AddressBookProps) {
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-container-high text-on-surface text-sm font-medium border border-outline-variant/20 hover:bg-surface-container-highest hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {t('addressBook.save')}
