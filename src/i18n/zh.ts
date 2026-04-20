@@ -6,6 +6,8 @@ const zh: Record<string, string> = {
   'nav.wallets': '钱包',
   'nav.approvals': '审批',
   'nav.activity': '活动',
+  'nav.apiKeys': 'API 密钥',
+  'nav.addressBook': '地址簿',
   'nav.settings': '设置',
 
   // Onboarding

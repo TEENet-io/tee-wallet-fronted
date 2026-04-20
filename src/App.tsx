@@ -13,6 +13,7 @@ import ApprovalList from './pages/ApprovalList';
 import ApprovalDetail from './components/ApprovalDetail';
 import SecuritySettings from './components/SecuritySettings';
 import AuditHistory from './pages/AuditHistory';
+import AddressBook from './components/AddressBook';
 
 type View =
   | { page: 'onboarding' }
@@ -21,6 +22,8 @@ type View =
   | { page: 'approvals' }
   | { page: 'approval-detail'; approvalId: string }
   | { page: 'settings' }
+  | { page: 'api-keys' }
+  | { page: 'address-book' }
   | { page: 'history' };
 
 function viewFromHash(): View | null {
@@ -66,6 +69,8 @@ export default function App() {
     approvals: () => setViewWithHash({ page: 'approvals' }),
     approvalDetail: (id: string) => setViewWithHash({ page: 'approval-detail', approvalId: id }),
     settings: () => setViewWithHash({ page: 'settings' }),
+    apiKeys: () => setViewWithHash({ page: 'api-keys' }),
+    addressBook: () => setViewWithHash({ page: 'address-book' }),
     history: () => setViewWithHash({ page: 'history' }),
   };
 
@@ -88,6 +93,13 @@ export default function App() {
     case 'settings':
       content = <SecuritySettings onNavigateHome={nav.wallets} />;
       break;
+    case 'api-keys':
+      // API keys currently live inside the SecuritySettings page.
+      content = <SecuritySettings onNavigateHome={nav.wallets} />;
+      break;
+    case 'address-book':
+      content = <AddressBook onBack={nav.wallets} />;
+      break;
     case 'history':
       content = <AuditHistory />;
       break;
@@ -99,17 +111,20 @@ export default function App() {
     <div className="min-h-screen bg-surface text-on-surface font-body selection:bg-primary/20 relative">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-14 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/10">
-        <div className="flex items-center gap-2.5">
-          <Shield className="w-5 h-5 text-primary" />
-          <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">TEENet Wallet</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="hidden md:flex gap-1 items-center mr-2">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2.5">
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="text-lg font-semibold text-on-surface tracking-tight font-headline">TEENet Wallet</span>
+          </div>
+          <nav className="hidden md:flex gap-1 items-center">
             <button type="button" onClick={nav.wallets} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('wallet') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.wallets')}</button>
             <button type="button" onClick={nav.approvals} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive('approval') ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.approvals')}</button>
             <button type="button" onClick={nav.history} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'history' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.activity')}</button>
-          </div>
-
+            <button type="button" onClick={nav.apiKeys} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'api-keys' || currentPage === 'settings' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.apiKeys')}</button>
+            <button type="button" onClick={nav.addressBook} className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${currentPage === 'address-book' ? 'text-primary font-semibold bg-primary/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'}`}>{t('nav.addressBook')}</button>
+          </nav>
+        </div>
+        <div className="flex items-center gap-1">
           <button type="button"
             onClick={toggleLang}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors"

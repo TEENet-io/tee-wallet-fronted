@@ -6,6 +6,8 @@ const en: Record<string, string> = {
   'nav.wallets': 'Wallets',
   'nav.approvals': 'Approvals',
   'nav.activity': 'Activity',
+  'nav.apiKeys': 'API Keys',
+  'nav.addressBook': 'Address Book',
   'nav.settings': 'Settings',
 
   // Onboarding
