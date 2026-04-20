@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Shield, Fingerprint, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getSessionToken } from '../lib/api';
 
 interface OnboardingProps {
   onLoginSuccess: () => void;
@@ -68,11 +69,20 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
       setVid(currentVid);
     }
     const ok = await register(email.trim(), code, currentVid);
-    if (ok) {
-      // Backend auto-issues a session on register now, so we can jump
-      // straight into the wallet without asking for a second passkey prompt.
-      setVid(null);
+    if (!ok) return;
+    setVid(null);
+    // Backend auto-issues a session on register so we can jump straight
+    // into the wallet. Fallback: if no session was issued (e.g. frontend
+    // ahead of backend), route the user to login mode so the toast
+    // "Please log in with your Passkey" has an actionable next step
+    // instead of leaving them stuck on the filled-in register form. Read
+    // the token directly from localStorage since `isAuthenticated` from
+    // the context is still the pre-register value at this point (React
+    // hasn't re-rendered yet).
+    if (getSessionToken()) {
       onLoginSuccess();
+    } else {
+      switchTo('login');
     }
   }
 

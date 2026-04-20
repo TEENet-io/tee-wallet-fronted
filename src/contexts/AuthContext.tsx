@@ -36,6 +36,18 @@ interface RegisterBeginResponse {
   invite_token?: string;
 }
 
+/**
+ * Verify response for `/api/auth/passkey/register/verify`. The backend
+ * issues a session on successful register so the frontend can drop the
+ * user straight into the wallet without a separate passkey login.
+ */
+interface RegisterVerifyResponse {
+  session_token?: string;
+  csrf_token?: string;
+  user_id?: string;
+  username?: string;
+}
+
 /** Response for `/api/auth/email/send-code`. */
 interface EmailSendCodeResponse {
   resend_cooldown?: number;
@@ -277,7 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const credJSON = credentialToJSON(credential);
 
-        const verRes = await api<Record<string, unknown>>(
+        const verRes = await api<RegisterVerifyResponse>(
           '/api/auth/passkey/register/verify',
           {
             method: 'POST',
@@ -293,7 +305,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return false;
         }
 
-        toast('Registered! Please log in with your Passkey.', 'success');
+        // Auto-login: consume the session issued by the backend so the
+        // user skips a separate passkey login right after register. On
+        // Android, Google Password Manager has a 1-3s indexing delay
+        // after credential creation that otherwise makes the first
+        // discoverable login return empty.
+        if (verRes.session_token && verRes.user_id && verRes.username) {
+          setSession(verRes.session_token, verRes.csrf_token ?? '');
+          const u: User = { id: String(verRes.user_id), username: verRes.username };
+          setUser(u);
+          localStorage.setItem('ocw_user', JSON.stringify(u));
+          toast(`Welcome, ${verRes.username}`, 'success');
+        } else {
+          toast('Registered! Please log in with your Passkey.', 'success');
+        }
         return true;
       } catch (e) {
         toast(`Registration error: ${(e as Error).message}`, 'error');
