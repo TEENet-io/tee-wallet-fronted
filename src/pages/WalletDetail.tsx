@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react';
-import { ArrowLeft, Copy, Check, RefreshCw, SlidersHorizontal, FileCode2, Pencil, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, Check, RefreshCw, Pencil, X, Trash2 } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -10,9 +10,6 @@ import { useToast } from '../contexts/ToastContext';
 import { api } from '../lib/api';
 import type { DailySpent } from '../types';
 import PolicyPanel from '../components/wallet/PolicyPanel';
-import ProgramPanel from '../components/wallet/ProgramPanel';
-
-type TabId = 'policy' | 'program';
 
 function StatusDot({ status }: { status: 'ready' | 'creating' | 'error' }) {
   const { t } = useLanguage();
@@ -52,7 +49,6 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
   const { toast } = useToast();
   const [deleting, setDeleting] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<TabId>('policy');
   const [copied, setCopied] = useState(false);
   const [pubkeyCopied, setPubkeyCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -338,37 +334,9 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
         </div>
       </div>
 
-      {/* Tab bar — only 2 tabs */}
-      <div className="flex gap-1 p-1 bg-surface-container-low rounded-2xl ghost-border">
-        <button type="button"
-          onClick={() => setActiveTab('policy')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-            activeTab === 'policy'
-              ? 'primary-gradient text-white shadow-[0_0_15px_rgba(124,58,237,0.25)]'
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-          }`}
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          {t('wallet.tab.threshold')}
-        </button>
-        <button type="button"
-          onClick={() => setActiveTab('program')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-            activeTab === 'program'
-              ? 'primary-gradient text-white shadow-[0_0_15px_rgba(124,58,237,0.25)]'
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-          }`}
-        >
-          <FileCode2 className="w-4 h-4" />
-          {isSolana ? t('wallet.tab.program') : t('wallet.tab.contract')}
-        </button>
-      </div>
-
-      {/* Tab content */}
-      <div className="animate-in fade-in duration-200" key={activeTab}>
-        {activeTab === 'policy' && <PolicyPanel walletId={wallet.id} dailySpent={dailySpent} onPolicyChange={refreshDailySpent} />}
-        {activeTab === 'program' && <ProgramPanel walletId={wallet.id} chainFamily={family} chainName={wallet.chain} />}
-      </div>
+      {/* Policy panel (whitelist moved to its own top-level page, since
+          contract allowlists are scoped per-chain, not per-wallet). */}
+      <PolicyPanel walletId={wallet.id} dailySpent={dailySpent} onPolicyChange={refreshDailySpent} />
 
       {/* Danger Zone */}
       <div className="rounded-2xl ghost-border border-error/20 bg-error/5 p-5">

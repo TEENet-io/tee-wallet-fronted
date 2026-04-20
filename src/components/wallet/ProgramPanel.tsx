@@ -278,12 +278,17 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-headline font-bold text-on-surface flex items-center gap-2">
+            <h2 className="text-xl font-headline font-bold text-on-surface flex items-center gap-2 flex-wrap">
               <FileCode2 className="w-5 h-5 text-primary" />
               {t(chainFamily === 'evm' ? 'program.title.evm' : 'program.title')}
+              <span className="text-sm font-normal text-on-surface-variant">· {chainName}</span>
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
               {t('program.subtitle')}
+            </p>
+            <p className="text-xs text-tertiary mt-2 flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-tertiary/80" />
+              {t('program.chainScope').replace('{chain}', chainName)}
             </p>
           </div>
           <button type="button"

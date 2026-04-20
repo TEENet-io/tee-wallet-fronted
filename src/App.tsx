@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Wallet, ShieldCheck, Activity, Settings, Sun, Moon, Languages, KeyRound, BookUser } from 'lucide-react';
+import { Shield, Wallet, ShieldCheck, Activity, Settings, Sun, Moon, Languages, KeyRound, BookUser, FileCode2 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
@@ -14,6 +14,7 @@ import ApprovalDetail from './components/ApprovalDetail';
 import SecuritySettings from './components/SecuritySettings';
 import AuditHistory from './pages/AuditHistory';
 import AddressBook from './components/AddressBook';
+import Whitelist from './pages/Whitelist';
 
 type View =
   | { page: 'onboarding' }
@@ -24,6 +25,7 @@ type View =
   | { page: 'settings' }
   | { page: 'api-keys' }
   | { page: 'address-book' }
+  | { page: 'whitelist' }
   | { page: 'history' };
 
 function viewFromHash(): View | null {
@@ -71,6 +73,7 @@ export default function App() {
     settings: () => setViewWithHash({ page: 'settings' }),
     apiKeys: () => setViewWithHash({ page: 'api-keys' }),
     addressBook: () => setViewWithHash({ page: 'address-book' }),
+    whitelist: () => setViewWithHash({ page: 'whitelist' }),
     history: () => setViewWithHash({ page: 'history' }),
   };
 
@@ -99,6 +102,9 @@ export default function App() {
       break;
     case 'address-book':
       content = <AddressBook onBack={nav.wallets} />;
+      break;
+    case 'whitelist':
+      content = <Whitelist />;
       break;
     case 'history':
       content = <AuditHistory />;
@@ -143,6 +149,7 @@ export default function App() {
         {[
           { key: 'wallet', onClick: nav.wallets, icon: Wallet, label: t('nav.wallets'), active: isActive('wallet') },
           { key: 'approval', onClick: nav.approvals, icon: ShieldCheck, label: t('nav.approvals'), active: isActive('approval') },
+          { key: 'whitelist', onClick: nav.whitelist, icon: FileCode2, label: t('nav.whitelist'), active: currentPage === 'whitelist' },
           { key: 'history', onClick: nav.history, icon: Activity, label: t('nav.activity'), active: currentPage === 'history' },
           { key: 'api-keys', onClick: nav.apiKeys, icon: KeyRound, label: t('nav.apiKeys'), active: currentPage === 'api-keys' || currentPage === 'settings' },
           { key: 'address-book', onClick: nav.addressBook, icon: BookUser, label: t('nav.addressBook'), active: currentPage === 'address-book' },

@@ -8,6 +8,7 @@ const zh: Record<string, string> = {
   'nav.activity': '活动',
   'nav.apiKeys': 'API 密钥',
   'nav.addressBook': '地址簿',
+  'nav.whitelist': '白名单',
   'nav.settings': '设置',
 
   // Onboarding
@@ -102,7 +103,11 @@ const zh: Record<string, string> = {
   'program.title': '白名单程序',
   'program.title.evm': '白名单合约',
   'program.subtitle': '已授权代理可交互的合约和代币。',
+  'program.chainScope': '该列表在您所有 {chain} 钱包之间共享。',
   'program.newBtn': '新建',
+  'whitelist.title': '合约白名单',
+  'whitelist.subtitle': '按链管理已授权的合约和代币，作用于该链下的所有钱包。',
+  'whitelist.empty': '您还没有钱包。请先创建钱包，再管理其所在链的白名单。',
   'program.addCustomTitle': '添加自定义合约',
   'program.addressPlaceholder': '合约地址（0x…）',
   'program.labelPlaceholder': '标签',

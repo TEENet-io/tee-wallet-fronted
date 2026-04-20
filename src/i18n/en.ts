@@ -8,6 +8,7 @@ const en: Record<string, string> = {
   'nav.activity': 'Activity',
   'nav.apiKeys': 'API Keys',
   'nav.addressBook': 'Address Book',
+  'nav.whitelist': 'Whitelist',
   'nav.settings': 'Settings',
 
   // Onboarding
@@ -102,7 +103,11 @@ const en: Record<string, string> = {
   'program.title': 'Whitelisted Programs',
   'program.title.evm': 'Whitelisted Contracts',
   'program.subtitle': 'Approved contracts and tokens your agent can interact with.',
+  'program.chainScope': 'Shared across all your {chain} wallets.',
   'program.newBtn': 'New',
+  'whitelist.title': 'Contract Whitelist',
+  'whitelist.subtitle': 'Approved contracts and tokens per chain. Applies to every wallet on the selected chain.',
+  'whitelist.empty': 'No wallets yet. Create a wallet first to manage its chain whitelist.',
   'program.addCustomTitle': 'Add Custom Contract',
   'program.addressPlaceholder': 'Contract address (0x…)',
   'program.labelPlaceholder': 'Label',
