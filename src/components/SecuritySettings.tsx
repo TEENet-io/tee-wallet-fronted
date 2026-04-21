@@ -64,7 +64,11 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
 
   const apiEndpoint =
     (window.location.origin + ((window as unknown as { __API_BASE__?: string }).__API_BASE__ ?? window.location.pathname)).replace(/\/+$/, '');
-  const newKeySnippet = newKey ? `api_key=${newKey} api=${apiEndpoint}` : '';
+  // Two-line env-var format matches skill/teenet-wallet/SKILL.md's required
+  // env names — pasting the snippet into an agent chat sets both vars directly.
+  const newKeySnippet = newKey
+    ? `TEENET_WALLET_API_URL=${apiEndpoint}\nTEENET_WALLET_API_KEY=${newKey}`
+    : '';
 
   const [generating, setGenerating] = useState(false);
   const [keyLabel, setKeyLabel] = useState('');
