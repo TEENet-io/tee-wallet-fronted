@@ -6,7 +6,7 @@ import { RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { api } from '../lib/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useWallets } from '../contexts/WalletContext';
-import type { AuditLog } from '../types';
+import type { AuditLog, APIKey } from '../types';
 
 // Action filter options
 interface ActionOption { value: string; labelKey: string }
@@ -69,6 +69,13 @@ export default function AuditHistory() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // prefix → label map. Audit log rows only store prefix (intentional: labels
+  // are mutable, prefix is the stable identifier). Rehydrate the label here
+  // just for display. Keys deleted since the log was written fall through to
+  // the prefix so the trail is still readable.
+  const [keyLabels, setKeyLabels] = useState<Record<string, string>>({});
+
+  const renderKey = (prefix?: string) => prefix ? (keyLabels[prefix] || prefix) : '';
 
   const totalPages = total !== null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : null;
 
@@ -113,6 +120,20 @@ export default function AuditHistory() {
   }, [t]);
 
   useEffect(() => { loadWallets(); }, [loadWallets]);
+
+  // Load API keys once so audit rows can display the label instead of the raw prefix.
+  useEffect(() => {
+    (async () => {
+      const res = await api<{ keys: APIKey[] }>('/api/auth/apikey/list');
+      if (res.success && Array.isArray(res.keys)) {
+        const map: Record<string, string> = {};
+        for (const k of res.keys) {
+          if (k.label) map[k.prefix] = k.label;
+        }
+        setKeyLabels(map);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     fetchLogs(page, actionFilter, walletFilter);
@@ -294,8 +315,11 @@ export default function AuditHistory() {
                           )}
                           {/* API key prefix */}
                           {log.api_key_prefix && (
-                            <span className="text-[10px] font-mono text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20">
-                              {log.api_key_prefix}
+                            <span
+                              className="text-[10px] font-mono text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20"
+                              title={log.api_key_prefix}
+                            >
+                              {renderKey(log.api_key_prefix)}
                             </span>
                           )}
                           {/* Daily limit */}
@@ -345,7 +369,12 @@ export default function AuditHistory() {
                             {log.api_key_prefix && (
                               <div className="flex gap-2 text-xs">
                                 <span className="text-on-surface-variant shrink-0 w-24 text-right">api key</span>
-                                <span className="text-on-surface font-mono">{log.api_key_prefix}</span>
+                                <span className="text-on-surface font-mono">
+                                  {renderKey(log.api_key_prefix)}
+                                  {keyLabels[log.api_key_prefix] && (
+                                    <span className="text-on-surface-variant ml-2">({log.api_key_prefix})</span>
+                                  )}
+                                </span>
                               </div>
                             )}
                           </div>
