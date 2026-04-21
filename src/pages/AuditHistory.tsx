@@ -276,10 +276,12 @@ export default function AuditHistory() {
                           <span className="text-sm font-medium text-on-surface capitalize">
                             {getActionLabel(log.action)}
                           </span>
-                          {/* Approve / Auto badge — only for actions that can go through approval */}
+                          {/* Approve / Passkey / Auto badge — only for actions that can go through approval */}
                           {log.status === 'success' && ['transfer', 'sign', 'contract_call', 'contract_add', 'contract_update', 'approve_token', 'revoke_approval', 'addressbook_add', 'addressbook_update'].includes(log.action) && (
                             hasApproval ? (
                               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">approve</span>
+                            ) : log.auth_mode === 'passkey' ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 uppercase tracking-wider">passkey</span>
                             ) : (
                               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">auto</span>
                             )
