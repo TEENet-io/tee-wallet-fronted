@@ -8,7 +8,7 @@ import type { ChainConfig } from '../types';
 // as mainnet.
 const TESTNET_PATTERNS = [
   'testnet', 'test-net', 'devnet', 'dev-net',
-  'sepolia', 'goerli', 'holesky', 'ropsten', 'rinkeby',
+  'sepolia', 'goerli', 'ropsten', 'rinkeby',
   'fuji', 'amoy', 'mumbai', 'baobab', 'chapel',
 ];
 

@@ -30,10 +30,6 @@ const PRESETS: Record<string, Preset[]> = {
     { label: 'DAI', address: '0x68194a729C2450ad26072b3D33ADaCbcef39D574', abi_hint: 'Stablecoin', symbol: 'DAI', decimals: 18 },
     { label: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E', abi_hint: 'DEX', symbol: 'UNI', decimals: 18 },
   ],
-  // ── Holesky Testnet ──
-  holesky: [
-    { label: 'WETH', address: '0x94373a4919B3240D86eA41593D5eBa789FEF3848', abi_hint: 'Wrapped', symbol: 'WETH', decimals: 18 },
-  ],
   // ── Base Mainnet ──
   base: [
     { label: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
