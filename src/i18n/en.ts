@@ -159,6 +159,7 @@ const en: Record<string, string> = {
   'approval.authorized': 'Authorized',
   'approval.expires': 'Expires',
   'approval.agent': 'Agent',
+  'approval.wallet': 'Wallet',
   'approval.action': 'Action',
   'approval.lowRisk': 'Low Risk',
   'approval.midRisk': 'Moderate Risk',

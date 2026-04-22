@@ -11,7 +11,8 @@ import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Approval } from '../types';
+import { useWallets } from '../contexts/WalletContext';
+import type { Approval, Wallet } from '../types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,7 +121,7 @@ type ApprovalJson = Record<
   string | number | boolean | string[] | Record<string, unknown> | undefined
 >;
 
-function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => string }) {
+function ContextRows({ approval, wallet, t }: { approval: Approval; wallet?: Wallet; t: (k: string) => string }) {
   let ctx: ApprovalJson = {};
   let pol: ApprovalJson = {};
   try {
@@ -173,6 +174,22 @@ function ContextRows({ approval, t }: { approval: Approval; t: (k: string) => st
             <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.agent')}</p>
             <p className="text-sm text-on-surface">{approval.agent_name}</p>
             {approval.agent_intent && <p className="text-xs text-on-surface-variant mt-1">{approval.agent_intent}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Wallet — identifies *which* of the user's wallets this approval is
+          attached to. The raw sending address may still appear as "From"
+          below when tx_context carries it. */}
+      {approval.wallet_id && (
+        <div className="flex items-start gap-3 p-4">
+          <Key className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">{t('approval.wallet')}</p>
+            <p className="text-sm text-on-surface">{wallet?.label || `${approval.wallet_id.slice(0, 8)}…`}</p>
+            {wallet?.address && (
+              <p className="text-xs text-on-surface-variant font-mono break-all mt-0.5">{wallet.address}</p>
+            )}
           </div>
         </div>
       )}
@@ -266,6 +283,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
   const { getFreshPasskeyCredential } = useAuth();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { wallets } = useWallets();
 
   const [approval, setApproval] = useState<Approval | null>(null);
   const [loading, setLoading] = useState(true);
@@ -500,7 +518,7 @@ export default function ApprovalDetail({ approvalId, onBack }: ApprovalDetailPro
       {/* Details */}
       <div className="space-y-4">
         {/* Context rows — parsed from tx_context / policy_data */}
-        <ContextRows approval={approval} t={t} />
+        <ContextRows approval={approval} wallet={wallets.find(w => w.id === approval.wallet_id)} t={t} />
 
         {/* Risk Assessment — compact */}
         {approval.risk_level && (

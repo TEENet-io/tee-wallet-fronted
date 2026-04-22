@@ -362,7 +362,7 @@ export default function AuditHistory() {
                             )}
                             {log.auth_mode && (
                               <div className="flex gap-2 text-xs">
-                                <span className="text-on-surface-variant shrink-0 w-24 text-right">auth</span>
+                                <span className="text-on-surface-variant shrink-0 w-24 text-right">source</span>
                                 <span className="text-on-surface font-mono">{log.auth_mode}</span>
                               </div>
                             )}

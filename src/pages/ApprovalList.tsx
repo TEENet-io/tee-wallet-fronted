@@ -5,7 +5,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Clock, RefreshCw, ChevronRight, Inbox } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Approval } from '../types';
+import { useWallets } from '../contexts/WalletContext';
+import type { Approval, Wallet } from '../types';
+
+// Best-effort short label for a wallet the approval belongs to.
+// Prefer the user-defined label; fall back to a shortened address so the chip
+// still identifies *which* wallet when multiple exist.
+function walletChipLabel(wallet: Wallet | undefined, walletId: string): string {
+  if (!wallet) return `${walletId.slice(0, 6)}…`;
+  if (wallet.label) return wallet.label;
+  if (wallet.address) return `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`;
+  return wallet.id;
+}
 
 
 function getTimeRemaining(expiresAt?: string): string | null {
@@ -91,6 +102,7 @@ function statusAccentClass(status: Approval['status']): string {
 interface ApprovalCardProps {
   key?: string | number;
   approval: Approval;
+  wallet?: Wallet;
   onClick: () => void;
 }
 
@@ -165,7 +177,7 @@ function parseContext(approval: Approval) {
   return { typeLabel, amount, currency, summary };
 }
 
-function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
+function ApprovalCard({ approval, wallet, onClick }: ApprovalCardProps) {
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining(approval.expires_at));
   const [progress, setProgress] = useState(() => getTimeProgress(approval));
 
@@ -201,6 +213,11 @@ function ApprovalCard({ approval, onClick }: ApprovalCardProps) {
               {approval.agent_name && (
                 <span className="text-[10px] text-on-surface-variant font-medium px-2 py-0.5 rounded-full bg-surface-container-high border border-outline-variant/20">
                   {approval.agent_name}
+                </span>
+              )}
+              {approval.wallet_id && (
+                <span className="text-[10px] text-on-surface font-semibold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 truncate max-w-[140px]">
+                  {walletChipLabel(wallet, approval.wallet_id)}
                 </span>
               )}
             </div>
@@ -260,6 +277,7 @@ interface ApprovalListProps {
 
 export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
   const { t } = useLanguage();
+  const { wallets } = useWallets();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -346,6 +364,7 @@ export default function ApprovalList({ onSelectApproval }: ApprovalListProps) {
             <ApprovalCard
               key={approval.id}
               approval={approval}
+              wallet={wallets.find(w => w.id === approval.wallet_id)}
               onClick={() => onSelectApproval(approval.id)}
             />
           ))}

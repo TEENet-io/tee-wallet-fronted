@@ -159,6 +159,7 @@ const zh: Record<string, string> = {
   'approval.authorized': '已授权',
   'approval.expires': '到期',
   'approval.agent': '代理',
+  'approval.wallet': '钱包',
   'approval.action': '操作',
   'approval.lowRisk': '低风险',
   'approval.midRisk': '中等风险',
