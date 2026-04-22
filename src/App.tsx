@@ -94,11 +94,13 @@ export default function App() {
       content = <ApprovalDetail approvalId={view.approvalId} onBack={nav.approvals} />;
       break;
     case 'settings':
-      content = <SecuritySettings onNavigateHome={nav.wallets} />;
+      // On PC the sidebar has separate entries for API Keys and Address Book,
+      // so this route folds down to Danger Zone only on md+. On mobile those
+      // sections stay visible here since the bottom nav has no direct link.
+      content = <SecuritySettings mode="responsive" onNavigateHome={nav.wallets} />;
       break;
     case 'api-keys':
-      // API keys currently live inside the SecuritySettings page.
-      content = <SecuritySettings onNavigateHome={nav.wallets} />;
+      content = <SecuritySettings mode="api-keys-only" onNavigateHome={nav.wallets} />;
       break;
     case 'address-book':
       content = <AddressBook onBack={nav.wallets} />;

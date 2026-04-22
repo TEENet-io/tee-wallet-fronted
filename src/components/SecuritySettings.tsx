@@ -46,9 +46,21 @@ function maskKey(raw: string): string {
 
 interface SecuritySettingsProps {
   onNavigateHome: () => void;
+  // Controls which sections render.
+  //  - 'full' (default): API Keys + Address Book + Danger Zone. Used by mobile Settings.
+  //  - 'api-keys-only': only API Keys. Used by the PC sidebar "API Keys" entry.
+  //  - 'responsive': full on mobile; desktop hides API Keys + Address Book so
+  //    the top-right cog on PC lands on a danger-zone-only view (those two
+  //    sections have their own sidebar entries on PC).
+  mode?: 'full' | 'api-keys-only' | 'responsive';
 }
 
-export default function SecuritySettings({ onNavigateHome }: SecuritySettingsProps) {
+export default function SecuritySettings({ onNavigateHome, mode = 'full' }: SecuritySettingsProps) {
+  const showApiKeys = mode === 'full' || mode === 'api-keys-only' || mode === 'responsive';
+  const showAddressBook = mode === 'full' || mode === 'responsive';
+  const showDanger = mode === 'full' || mode === 'responsive';
+  // In 'responsive' mode, API Keys + Address Book are mobile-only.
+  const mobileOnly = mode === 'responsive' ? 'md:hidden' : '';
   const auth = useAuth();
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -344,14 +356,16 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
       <ConfirmDialog />
 
       <div className="animate-in fade-in duration-500 space-y-12">
-        {/* Header */}
-        <div>
-          <h1 className="text-xl font-semibold text-on-surface">{t('settings.title')}</h1>
+        {/* Header — title shifts with mode so each entry point feels single-purpose. */}
+        <div className={mode === 'responsive' ? 'md:hidden' : ''}>
+          <h1 className="text-xl font-semibold text-on-surface">
+            {mode === 'api-keys-only' ? t('nav.apiKeys') : t('settings.title')}
+          </h1>
         </div>
 
-        {/* One-time new key banner */}
-        {newKey && (
-          <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-secondary/10 border border-secondary/30">
+        {/* One-time new key banner — only relevant when API Keys is visible. */}
+        {newKey && showApiKeys && (
+          <div className={`flex items-start justify-between gap-4 p-4 rounded-2xl bg-secondary/10 border border-secondary/30 ${mobileOnly}`}>
             <div className="space-y-1 min-w-0">
               <p className="text-xs text-secondary uppercase tracking-widest font-bold">
                 {t('settings.newKey')}
@@ -372,7 +386,8 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
         )}
 
         {/* API Management Section */}
-        <section className="space-y-6">
+        {showApiKeys && (
+        <section className={`space-y-6 ${mobileOnly}`}>
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-on-surface">{t('settings.apiKeys')}</h2>
             <p className="text-xs text-on-surface-variant">{t('settings.apiKeysDesc')}</p>
@@ -513,11 +528,13 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
             )}
           </div>
         </section>
+        )}
 
         {/* ------------------------------------------------------------------ */}
         {/* Address Book Section                                                */}
         {/* ------------------------------------------------------------------ */}
-        <section className="space-y-6">
+        {showAddressBook && (
+        <section className={`space-y-6 ${mobileOnly}`}>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-1">
               <h2 className="text-2xl font-headline font-semibold text-on-surface">
@@ -630,9 +647,11 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
             </div>
           )}
         </section>
+        )}
 
 
         {/* Danger Zone */}
+        {showDanger && (
         <section className="space-y-4">
           <div className="bg-surface-container-low rounded-2xl ghost-border overflow-hidden">
             <div className="p-6 bg-error/5 flex flex-col gap-4">
@@ -660,6 +679,7 @@ export default function SecuritySettings({ onNavigateHome }: SecuritySettingsPro
             </div>
           </div>
         </section>
+        )}
 
       </div>
     </>
