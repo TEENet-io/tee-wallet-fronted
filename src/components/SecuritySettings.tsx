@@ -1,7 +1,7 @@
 // Copyright (C) 2026 TEENet
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { useState, useEffect, useCallback, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react';
 import {
   Terminal, Bot, KeyRound, Radio, Ban,
   LogOut, Trash2, Fingerprint, Copy, Check,
@@ -90,6 +90,10 @@ export default function SecuritySettings({ onNavigateHome, mode = 'full' }: Secu
   // Rename state
   const [renamingPrefix, setRenamingPrefix] = useState<string | null>(null);
   const [renameLabel, setRenameLabel] = useState('');
+  // Guards against Enter+Blur double-fire: Enter calls commitRename which
+  // setRenamingPrefix(null) on completion, and that unmount triggers onBlur
+  // which would call commitRename a second time.
+  const renameCommittingRef = useRef(false);
 
   // ---------------------------------------------------------------------------
   // Address Book state
@@ -291,20 +295,28 @@ export default function SecuritySettings({ onNavigateHome, mode = 'full' }: Secu
   }
 
   async function commitRename(prefix: string) {
+    if (renameCommittingRef.current) return;
     const trimmed = renameLabel.trim();
     if (!trimmed) { setRenamingPrefix(null); return; }
+    const current = keys.find(k => k.prefix === prefix);
+    if (trimmed === (current?.label ?? '')) { setRenamingPrefix(null); return; }
 
-    const res = await api('/api/auth/apikey', {
-      method: 'PATCH',
-      body: JSON.stringify({ prefix, label: trimmed }),
-    });
-    if (res.success) {
-      toast(t('settings.renameSuccess'), 'success');
-      await loadKeys();
-    } else {
-      toast((res as { error?: string }).error || 'Rename failed', 'error');
+    renameCommittingRef.current = true;
+    try {
+      const res = await api('/api/auth/apikey', {
+        method: 'PATCH',
+        body: JSON.stringify({ prefix, label: trimmed }),
+      });
+      if (res.success) {
+        toast(t('settings.renameSuccess'), 'success');
+        await loadKeys();
+      } else {
+        toast((res as { error?: string }).error || 'Rename failed', 'error');
+      }
+    } finally {
+      renameCommittingRef.current = false;
+      setRenamingPrefix(null);
     }
-    setRenamingPrefix(null);
   }
 
   // ---------------------------------------------------------------------------
