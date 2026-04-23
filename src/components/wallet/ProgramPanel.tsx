@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
-import { FileCode2, Plus, Trash2, Loader2, Pencil } from 'lucide-react';
+import { FileCode2, Plus, Trash2, Loader2, Pencil, Info, Copy } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,17 +10,21 @@ import { useConfirm } from '../ConfirmDialog';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { AllowedContract } from '../../types';
 
-// Default well-known contracts per chain
-type Preset = { label: string; address: string; abi_hint: string; symbol: string; decimals: number };
+// `symbol` and `decimals` are only meaningful for ERC-20 tokens / SPL mints.
+// Protocol contracts (DEX routers, lending pools, Solana programs) are
+// call targets, not fungible tokens, so those fields are omitted — storing
+// a token-like shape for them would show "1 AAVE" style phrasing on the
+// transfer UI which is misleading.
+type Preset = { label: string; address: string; abi_hint: string; symbol?: string; decimals?: number };
 
 const PRESETS: Record<string, Preset[]> = {
   // ── EVM Mainnet ──
   ethereum: [
-    { label: 'Uniswap V3 Router', address: '0xE592427A0AEce92De3Edee1F18E0157C05861564', abi_hint: 'DEX', symbol: 'UNI', decimals: 18 },
     { label: 'USDT', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
     { label: 'USDC', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
-    { label: 'Aave V3 Pool', address: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', abi_hint: 'Lending', symbol: 'AAVE', decimals: 18 },
     { label: 'Lido stETH', address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', abi_hint: 'Staking', symbol: 'stETH', decimals: 18 },
+    { label: 'Uniswap V3 Router', address: '0xE592427A0AEce92De3Edee1F18E0157C05861564', abi_hint: 'DEX' },
+    { label: 'Aave V3 Pool', address: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', abi_hint: 'Lending' },
   ],
   // ── Sepolia Testnet ──
   sepolia: [
@@ -28,7 +32,7 @@ const PRESETS: Record<string, Preset[]> = {
     { label: 'USDT', address: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
     { label: 'WETH', address: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14', abi_hint: 'Wrapped', symbol: 'WETH', decimals: 18 },
     { label: 'DAI', address: '0x68194a729C2450ad26072b3D33ADaCbcef39D574', abi_hint: 'Stablecoin', symbol: 'DAI', decimals: 18 },
-    { label: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E', abi_hint: 'DEX', symbol: 'UNI', decimals: 18 },
+    { label: 'Uniswap V3 Router', address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E', abi_hint: 'DEX' },
   ],
   // ── Base Mainnet ──
   base: [
@@ -43,7 +47,13 @@ const PRESETS: Record<string, Preset[]> = {
   bsc: [
     { label: 'USDT (BSC)', address: '0x55d398326f99059fF775485246999027B3197955', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 18 },
     { label: 'USDC (BSC)', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 18 },
-    { label: 'PancakeSwap Router', address: '0x10ED43C718714eb63d5aA57B78B54704E256024E', abi_hint: 'DEX', symbol: 'CAKE', decimals: 18 },
+    { label: 'PancakeSwap Router', address: '0x10ED43C718714eb63d5aA57B78B54704E256024E', abi_hint: 'DEX' },
+  ],
+  // ── BSC Testnet ──
+  'bsc-testnet': [
+    { label: 'Testnet USDT', address: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 18 },
+    { label: 'Testnet USDC', address: '0x64544969ed7EBf5f083679233325356EbE738930', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 18 },
+    { label: 'Testnet WBNB', address: '0xae13d989dac2f0debff460ac112a837c89baa7cd', abi_hint: 'Wrapped', symbol: 'WBNB', decimals: 18 },
   ],
   // ── Polygon ──
   polygon: [
@@ -60,13 +70,19 @@ const PRESETS: Record<string, Preset[]> = {
     { label: 'USDC', address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
     { label: 'USDT', address: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
   ],
+  // ── Avalanche C-Chain ──
+  avalanche: [
+    { label: 'USDC', address: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
+    { label: 'USDT', address: '0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
+    { label: 'WAVAX', address: '0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7', abi_hint: 'Wrapped', symbol: 'WAVAX', decimals: 18 },
+  ],
   // ── Solana Mainnet ──
   solana: [
     { label: 'USDC', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', abi_hint: 'Stablecoin', symbol: 'USDC', decimals: 6 },
     { label: 'USDT', address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', abi_hint: 'Stablecoin', symbol: 'USDT', decimals: 6 },
-    { label: 'Jupiter Aggregator', address: 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', abi_hint: 'DEX', symbol: 'JUP', decimals: 6 },
-    { label: 'Raydium AMM', address: '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', abi_hint: 'DEX', symbol: 'RAY', decimals: 6 },
-    { label: 'Marinade Finance', address: 'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD', abi_hint: 'Staking', symbol: 'mSOL', decimals: 9 },
+    { label: 'Jupiter Aggregator', address: 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', abi_hint: 'DEX' },
+    { label: 'Raydium AMM', address: '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', abi_hint: 'DEX' },
+    { label: 'Marinade Stake Program', address: 'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD', abi_hint: 'Staking' },
   ],
   // ── Solana Devnet ──
   'solana-devnet': [
@@ -89,7 +105,7 @@ function badgeColor(hint?: string): string {
   return 'bg-primary/10 text-primary border border-primary/20';
 }
 
-type ActivePanel = { id: string | number; mode: 'edit' } | null;
+type ActivePanel = { id: string | number; mode: 'edit' | 'view' } | null;
 
 interface ProgramPanelProps {
   walletId: string;
@@ -119,7 +135,8 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
   // New contract form
   const [newLabel, setNewLabel] = useState('');
   const [newAddress, setNewAddress] = useState('');
-  const [newAbiHint, setNewAbiHint] = useState('');
+  const [newSymbol, setNewSymbol] = useState('');
+  const [newDecimals, setNewDecimals] = useState('');
 
   const loadContracts = useCallback(async () => {
     setLoading(true);
@@ -136,12 +153,29 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
   useEffect(() => { loadContracts(); }, [loadContracts]);
 
   function toggleEdit(id: string | number, contract: AllowedContract) {
-    if (activePanel?.id === id) {
+    if (activePanel?.id === id && activePanel.mode === 'edit') {
       setActivePanel(null);
       return;
     }
     setEditLabel(contract.label || '');
     setActivePanel({ id, mode: 'edit' });
+  }
+
+  function toggleView(id: string | number) {
+    if (activePanel?.id === id && activePanel.mode === 'view') {
+      setActivePanel(null);
+      return;
+    }
+    setActivePanel({ id, mode: 'view' });
+  }
+
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(t('program.copied'), 'success');
+    } catch {
+      toast(t('program.copyFail'), 'error');
+    }
   }
 
   async function handleRemove(contract: AllowedContract) {
@@ -202,16 +236,31 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
     }
   }
 
-  const DEFAULT_PROGRAMS = PRESETS[chainName] ?? PRESETS[chainFamily === 'solana' ? 'solana' : 'ethereum'] ?? [];
+  // Only fall back to ethereum presets for unmapped EVM chains when the
+  // chain is a known mainnet-ish EVM that shares USDC-style stablecoin
+  // addresses. For chains with chain-specific addresses (or none listed),
+  // render an empty quick-add list instead of misleading the user with
+  // ethereum-mainnet addresses that don't exist on their chain.
+  const DEFAULT_PROGRAMS = PRESETS[chainName] ?? (chainFamily === 'solana' ? PRESETS['solana'] : []) ?? [];
 
   async function handleAddDefault(program: Preset) {
     setAdding(true);
     try {
       const passkeyBody = await getFreshPasskeyCredential();
       if (!passkeyBody) { setAdding(false); return; }
+      const body: Record<string, unknown> = {
+        ...passkeyBody,
+        contract_address: program.address,
+        label: program.label,
+      };
+      // Only send symbol/decimals for actual tokens — omitting them for
+      // protocol contracts (routers, pools, programs) avoids storing
+      // misleading token-shape metadata on call targets.
+      if (program.symbol !== undefined) body.symbol = program.symbol;
+      if (program.decimals !== undefined) body.decimals = program.decimals;
       const res = await api(`/api/wallets/${walletId}/contracts`, {
         method: 'POST',
-        body: JSON.stringify({ ...passkeyBody, contract_address: program.address, label: program.label, symbol: program.symbol, decimals: program.decimals }),
+        body: JSON.stringify(body),
       });
       if (res.success) {
         toast(`${program.label} ${t('program.addedSuffix')}`, 'success');
@@ -228,24 +277,41 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
     e.preventDefault();
     if (!newAddress.trim()) { toast(t('program.addressRequired'), 'error'); return; }
 
+    // Validate decimals — ERC-20 amount math depends on it, so a bad or
+    // missing value on a token contract silently breaks transfer sizing.
+    let decimalsNum: number | undefined;
+    const decimalsRaw = newDecimals.trim();
+    if (decimalsRaw !== '') {
+      const parsed = Number(decimalsRaw);
+      if (!Number.isInteger(parsed) || parsed < 0 || parsed > 77) {
+        toast(t('program.decimalsInvalid'), 'error');
+        return;
+      }
+      decimalsNum = parsed;
+    }
+
     setAdding(true);
     try {
       const passkeyBody = await getFreshPasskeyCredential();
       if (!passkeyBody) { setAdding(false); return; }
+      const body: Record<string, unknown> = {
+        ...passkeyBody,
+        contract_address: newAddress.trim(),
+        label: newLabel.trim() || t('program.customContract'),
+      };
+      const symbolTrimmed = newSymbol.trim();
+      if (symbolTrimmed !== '') body.symbol = symbolTrimmed;
+      if (decimalsNum !== undefined) body.decimals = decimalsNum;
       const res = await api(`/api/wallets/${walletId}/contracts`, {
         method: 'POST',
-        body: JSON.stringify({
-          ...passkeyBody,
-          contract_address: newAddress.trim(),
-          label: newLabel.trim() || t('program.customContract'),
-          symbol: newAbiHint.trim() || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       if (res.success) {
         toast(t('program.contractAdded'), 'success');
         setNewLabel('');
         setNewAddress('');
-        setNewAbiHint('');
+        setNewSymbol('');
+        setNewDecimals('');
         setShowAdd(false);
         await loadContracts();
       } else {
@@ -307,22 +373,36 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
                 className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary"
               />
             </div>
-            <div className="flex items-center gap-3">
+            {/* Token-specific metadata. Leave both blank for non-token
+                contracts (DEX routers, programs, etc.) — they're call
+                targets, not fungible tokens. For ERC-20 / SPL tokens both
+                are required to make transfer amount math correct. */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input
-                value={newAbiHint}
-                onChange={e => setNewAbiHint(e.target.value)}
-                placeholder={t('program.typePlaceholder')}
-                className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary"
+                value={newSymbol}
+                onChange={e => setNewSymbol(e.target.value)}
+                placeholder={t('program.symbolPlaceholder')}
+                className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary"
+              />
+              <input
+                value={newDecimals}
+                onChange={e => setNewDecimals(e.target.value)}
+                placeholder={t('program.decimalsPlaceholder')}
+                type="number"
+                min={0}
+                max={77}
+                className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm outline-none focus:border-primary"
               />
               <button
                 type="submit"
                 disabled={adding || !newAddress.trim()}
-                className="px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all flex items-center gap-2"
+                className="px-6 py-3 rounded-xl primary-gradient text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all flex items-center justify-center gap-2"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {t('program.addBtn')}
               </button>
             </div>
+            <p className="text-xs text-on-surface-variant">{t('program.tokenMetaHint')}</p>
           </form>
         )}
 
@@ -401,6 +481,20 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-1 flex-shrink-0">
+                      {/* View details */}
+                      <button type="button"
+                        onClick={() => toggleView(contract.id)}
+                        title={t('program.view')}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          panel === 'view'
+                            ? 'bg-primary/15 text-primary border border-primary/25'
+                            : 'text-on-surface-variant hover:text-primary hover:bg-primary/10 border border-transparent'
+                        }`}
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{t('program.view')}</span>
+                      </button>
+
                       {/* Edit contract */}
                       <button type="button"
                         onClick={() => toggleEdit(contract.id, contract)}
@@ -463,6 +557,69 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
                       </div>
                     </form>
                   )}
+
+                  {/* Inline panel: View details (read-only) */}
+                  {panel === 'view' && (
+                    <div className="border-t border-outline-variant/10 bg-surface-container px-4 py-4 space-y-4">
+                      {/* Address — the primary identifier, given its own block
+                          so the long hex string isn't crammed against other
+                          rows and the copy button has a clear target. */}
+                      <div className="bg-surface-container-lowest rounded-xl px-3.5 py-3 flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            {t('program.fullAddress')}
+                          </p>
+                          <p className="font-mono text-xs text-on-surface break-all leading-relaxed">
+                            {contract.contract_address}
+                          </p>
+                        </div>
+                        <button type="button"
+                          onClick={() => copyText(contract.contract_address)}
+                          title={t('program.copyAddress')}
+                          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Metadata chips. Chain is always shown; symbol /
+                          decimals only appear for token entries. */}
+                      <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-lowest text-xs">
+                          <span className="text-on-surface-variant">{t('program.chainLabel')}</span>
+                          <span className="text-on-surface font-medium">{chainName}</span>
+                        </span>
+                        {contract.symbol && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-lowest text-xs">
+                            <span className="text-on-surface-variant">{t('program.symbol')}</span>
+                            <span className="text-on-surface font-medium">{contract.symbol}</span>
+                          </span>
+                        )}
+                        {contract.decimals != null && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-lowest text-xs">
+                            <span className="text-on-surface-variant">{t('program.decimals')}</span>
+                            <span className="text-on-surface font-medium">{contract.decimals}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {!contract.symbol && contract.decimals == null && (
+                        <p className="text-xs text-on-surface-variant italic">
+                          {t('program.nonTokenNote')}
+                        </p>
+                      )}
+
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setActivePanel(null)}
+                          className="px-4 py-2 rounded-xl text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all"
+                        >
+                          {t('common.close')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -472,7 +629,11 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
         {/* Summary */}
         {contracts.length > 0 && (
           <div className="px-2 text-xs text-on-surface-variant">
-            {contracts.length} {contracts.length !== 1 ? t('program.programs') : t('program.program')} {t('program.whitelisted')}
+            {contracts.length} {
+              chainFamily === 'solana'
+                ? (contracts.length !== 1 ? t('program.programs') : t('program.program'))
+                : (contracts.length !== 1 ? t('program.contracts') : t('program.contract'))
+            } {t('program.whitelisted')}
           </div>
         )}
       </div>
