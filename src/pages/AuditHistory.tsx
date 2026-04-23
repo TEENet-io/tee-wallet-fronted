@@ -363,16 +363,16 @@ export default function AuditHistory() {
                             {log.auth_mode && (
                               <div className="flex gap-2 text-xs">
                                 <span className="text-on-surface-variant shrink-0 w-24 text-right">source</span>
-                                <span className="text-on-surface font-mono">{log.auth_mode}</span>
-                              </div>
-                            )}
-                            {log.api_key_prefix && (
-                              <div className="flex gap-2 text-xs">
-                                <span className="text-on-surface-variant shrink-0 w-24 text-right">api key</span>
                                 <span className="text-on-surface font-mono">
-                                  {renderKey(log.api_key_prefix)}
-                                  {keyLabels[log.api_key_prefix] && (
-                                    <span className="text-on-surface-variant ml-2">({log.api_key_prefix})</span>
+                                  {log.auth_mode}
+                                  {log.api_key_prefix && (
+                                    <>
+                                      <span className="text-on-surface-variant mx-1.5">·</span>
+                                      {renderKey(log.api_key_prefix)}
+                                      {keyLabels[log.api_key_prefix] && (
+                                        <span className="text-on-surface-variant ml-1">({log.api_key_prefix})</span>
+                                      )}
+                                    </>
                                   )}
                                 </span>
                               </div>
