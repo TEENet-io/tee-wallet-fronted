@@ -115,8 +115,6 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
 
   // Edit form
   const [editLabel, setEditLabel] = useState('');
-  const [editSymbol, setEditSymbol] = useState('');
-  const [editDecimals, setEditDecimals] = useState('');
 
   // New contract form
   const [newLabel, setNewLabel] = useState('');
@@ -143,8 +141,6 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
       return;
     }
     setEditLabel(contract.label || '');
-    setEditSymbol(contract.symbol || '');
-    setEditDecimals(contract.decimals != null ? String(contract.decimals) : '');
     setActivePanel({ id, mode: 'edit' });
   }
 
@@ -179,23 +175,20 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
 
   async function handleEdit(e: FormEvent, contract: AllowedContract) {
     e.preventDefault();
+    // Only the display label is editable; symbol/decimals are on-chain
+    // metadata and immutable here. The backend ignores anything else and
+    // does not require a fresh passkey assertion for label-only updates,
+    // so we skip the credential prompt.
+    const nextLabel = editLabel.trim();
+    if (nextLabel === (contract.label || '')) {
+      setActivePanel(null);
+      return;
+    }
     setActionBusy(true);
     try {
-      const passkeyBody = await getFreshPasskeyCredential();
-      if (!passkeyBody) { setActionBusy(false); return; }
-
-      const body: Record<string, unknown> = {
-        ...passkeyBody,
-        label: editLabel.trim() || contract.label,
-        symbol: editSymbol.trim() || undefined,
-      };
-      if (editDecimals.trim() !== '') {
-        body.decimals = parseInt(editDecimals.trim(), 10);
-      }
-
       const res = await api(`/api/wallets/${walletId}/contracts/${contract.id}`, {
         method: 'PUT',
-        body: JSON.stringify(body),
+        body: JSON.stringify({ label: nextLabel }),
       });
       if (res.success) {
         toast(t('program.editSuccess'), 'success');
@@ -444,29 +437,13 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
                       className="border-t border-outline-variant/10 bg-surface-container px-4 py-4 space-y-3"
                     >
                       <p className="text-xs font-semibold text-primary uppercase tracking-wider">{t('program.edit')}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <input
-                          value={editLabel}
-                          onChange={e => setEditLabel(e.target.value)}
-                          placeholder={t('program.label')}
-                          className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-primary sm:col-span-1"
-                        />
-                        <input
-                          value={editSymbol}
-                          onChange={e => setEditSymbol(e.target.value)}
-                          placeholder={t('program.symbol')}
-                          className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-primary"
-                        />
-                        <input
-                          value={editDecimals}
-                          onChange={e => setEditDecimals(e.target.value)}
-                          placeholder={t('program.decimals')}
-                          type="number"
-                          min="0"
-                          max="18"
-                          className="bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-primary"
-                        />
-                      </div>
+                      <input
+                        value={editLabel}
+                        onChange={e => setEditLabel(e.target.value)}
+                        placeholder={t('program.label')}
+                        autoFocus
+                        className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-3 py-2.5 text-on-surface text-sm outline-none focus:border-primary"
+                      />
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
