@@ -23,6 +23,10 @@ const zh: Record<string, string> = {
   'onboarding.securedBy': '由 TEENet 提供支持',
   'onboarding.activating': '激活中…',
   'onboarding.connecting': '连接中…',
+  'onboarding.noticeTitle': '请注意',
+  'onboarding.noticeAlpha': 'Alpha 测试版 —— 可能存在未完善之处。',
+  'onboarding.noticeTestnet': '仅支持测试网，请勿转入真实资产。',
+  'onboarding.noticeQuota': '仅开放前 500 个注册名额，先到先得。',
 
   // Wallet list
   'wallets.title': '我的钱包',

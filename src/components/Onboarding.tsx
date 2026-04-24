@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { useEffect, useState } from 'react';
-import { Shield, Fingerprint, LogIn, Loader2 } from 'lucide-react';
+import { Shield, Fingerprint, LogIn, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSessionToken } from '../lib/api';
@@ -108,6 +108,19 @@ export default function Onboarding({ onLoginSuccess }: OnboardingProps) {
           <p className="text-on-surface-variant text-sm">
             {t('onboarding.appTagline')}
           </p>
+        </div>
+
+        {/* Alpha notice */}
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex gap-3">
+          <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-xs font-semibold text-on-surface">{t('onboarding.noticeTitle')}</p>
+            <ul className="text-xs text-on-surface-variant space-y-1 list-disc list-inside marker:text-amber-500/70">
+              <li>{t('onboarding.noticeAlpha')}</li>
+              <li>{t('onboarding.noticeTestnet')}</li>
+              <li>{t('onboarding.noticeQuota')}</li>
+            </ul>
+          </div>
         </div>
 
         {/* Auth Card */}

@@ -23,6 +23,10 @@ const en: Record<string, string> = {
   'onboarding.securedBy': 'Powered by TEENet',
   'onboarding.activating': 'Activating...',
   'onboarding.connecting': 'Connecting...',
+  'onboarding.noticeTitle': 'Heads up',
+  'onboarding.noticeAlpha': 'Alpha release — expect rough edges.',
+  'onboarding.noticeTestnet': 'Testnet only. Do not send real funds.',
+  'onboarding.noticeQuota': 'First 500 registrations only — first come, first served.',
 
   // Wallet list
   'wallets.title': 'Your Wallets',
