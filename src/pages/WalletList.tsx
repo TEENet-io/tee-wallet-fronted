@@ -1,7 +1,7 @@
 // Copyright (C) 2026 TEENet
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { useState, useMemo, useEffect, type MouseEvent } from 'react';
+import { useState, useMemo, type MouseEvent } from 'react';
 import { Plus, Wallet, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -55,34 +55,39 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
   const [creating, setCreating] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
-  // Auto-flip to testnet once chains load if the deployment exposes no
-  // mainnet entries (public alpha runs with ALPHA_MODE=true, which filters
-  // /api/chains down to testnets only). Runs once per change of available
-  // chains — the user can still toggle tabs manually afterward.
-  useEffect(() => {
+  // Availability of each network tab, based on what /api/chains returned.
+  // Under ALPHA_MODE=true the backend only exposes testnets, so the Mainnet
+  // tab gets hidden instead of rendering an empty button that does nothing.
+  const { hasMainnet, hasTestnet } = useMemo(() => {
     const all = Object.values(chainsMap) as ChainConfig[];
-    if (all.length === 0) return;
-    const hasMainnet = all.some(c => !isTestnetChain(c));
-    const hasTestnet = all.some(c => isTestnetChain(c));
-    if (network === 'mainnet' && !hasMainnet && hasTestnet) {
-      setNetwork('testnet');
-    }
-  }, [chainsMap, network]);
+    return {
+      hasMainnet: all.some(c => !isTestnetChain(c)),
+      hasTestnet: all.some(c => isTestnetChain(c)),
+    };
+  }, [chainsMap]);
+
+  // If the state's `network` has no chains available, fall back to the one
+  // that does — covers the initial-load case where `useState` defaults to
+  // 'mainnet' but the deployment only exposes testnets.
+  const effectiveNetwork: 'mainnet' | 'testnet' =
+    network === 'mainnet' && !hasMainnet && hasTestnet ? 'testnet' :
+    network === 'testnet' && !hasTestnet && hasMainnet ? 'mainnet' :
+    network;
 
   // First chain in the currently selected network — used as fallback
   // when the user hasn't explicitly picked one or after switching networks.
   const firstChainInNetwork = useMemo(() => {
     const all = Object.values(chainsMap) as ChainConfig[];
     const match = all.find(c =>
-      network === 'testnet' ? isTestnetChain(c) : !isTestnetChain(c),
+      effectiveNetwork === 'testnet' ? isTestnetChain(c) : !isTestnetChain(c),
     );
     return match?.name ?? '';
-  }, [chainsMap, network]);
+  }, [chainsMap, effectiveNetwork]);
 
   // Clear the selection if it doesn't belong to the active network.
   const selectedCfg = selectedChain ? (chainsMap[selectedChain] as ChainConfig | undefined) : undefined;
   const selectedBelongsToNetwork = !!selectedCfg &&
-    (network === 'testnet' ? isTestnetChain(selectedCfg) : !isTestnetChain(selectedCfg));
+    (effectiveNetwork === 'testnet' ? isTestnetChain(selectedCfg) : !isTestnetChain(selectedCfg));
   const effectiveChain = selectedBelongsToNetwork ? selectedChain : firstChainInNetwork;
 
   function handleNetworkChange(next: 'mainnet' | 'testnet') {
@@ -146,35 +151,41 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
             {/* Ambient glow */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[80px] -mr-16 -mt-16 pointer-events-none" />
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
-                {t('wallets.network')}
-              </label>
-              <div className="inline-flex p-1 rounded-xl bg-surface-container-lowest border border-outline-variant/20">
-                <button
-                  type="button"
-                  onClick={() => handleNetworkChange('mainnet')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    network === 'mainnet'
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {t('wallets.mainnet')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleNetworkChange('testnet')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    network === 'testnet'
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {t('wallets.testnet')}
-                </button>
+            {(hasMainnet || hasTestnet) && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
+                  {t('wallets.network')}
+                </label>
+                <div className="inline-flex p-1 rounded-xl bg-surface-container-lowest border border-outline-variant/20">
+                  {hasMainnet && (
+                    <button
+                      type="button"
+                      onClick={() => handleNetworkChange('mainnet')}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        effectiveNetwork === 'mainnet'
+                          ? 'bg-primary/20 text-primary'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                      }`}
+                    >
+                      {t('wallets.mainnet')}
+                    </button>
+                  )}
+                  {hasTestnet && (
+                    <button
+                      type="button"
+                      onClick={() => handleNetworkChange('testnet')}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        effectiveNetwork === 'testnet'
+                          ? 'bg-primary/20 text-primary'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                      }`}
+                    >
+                      {t('wallets.testnet')}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
@@ -184,7 +195,7 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
                 chains={chainsMap}
                 value={effectiveChain}
                 onChange={setSelectedChain}
-                network={network}
+                network={effectiveNetwork}
               />
             </div>
 
