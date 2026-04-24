@@ -1,7 +1,7 @@
 // Copyright (C) 2026 TEENet
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { useState, useMemo, type MouseEvent } from 'react';
+import { useState, useMemo, useEffect, type MouseEvent } from 'react';
 import { Plus, Wallet, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWallets } from '../contexts/WalletContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -54,6 +54,20 @@ export default function WalletList({ onSelectWallet }: WalletListProps) {
   const [label, setLabel] = useState('');
   const [creating, setCreating] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+
+  // Auto-flip to testnet once chains load if the deployment exposes no
+  // mainnet entries (public alpha runs with ALPHA_MODE=true, which filters
+  // /api/chains down to testnets only). Runs once per change of available
+  // chains — the user can still toggle tabs manually afterward.
+  useEffect(() => {
+    const all = Object.values(chainsMap) as ChainConfig[];
+    if (all.length === 0) return;
+    const hasMainnet = all.some(c => !isTestnetChain(c));
+    const hasTestnet = all.some(c => isTestnetChain(c));
+    if (network === 'mainnet' && !hasMainnet && hasTestnet) {
+      setNetwork('testnet');
+    }
+  }, [chainsMap, network]);
 
   // First chain in the currently selected network — used as fallback
   // when the user hasn't explicitly picked one or after switching networks.
