@@ -112,7 +112,6 @@ const en: Record<string, string> = {
   'whitelist.title': 'Contract Whitelist',
   'whitelist.subtitle': 'Approved contracts and tokens per chain. Applies to every wallet on the selected chain.',
   'whitelist.empty': 'No chains configured yet.',
-  'whitelist.noWalletOnChain': 'No wallet on {chain} yet. Create a wallet on this chain to manage its whitelist.',
   'program.addCustomTitle': 'Add Custom Contract',
   'program.addressPlaceholder': 'Contract address (0x…)',
   'program.labelPlaceholder': 'Label',

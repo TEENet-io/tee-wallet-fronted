@@ -112,7 +112,6 @@ const zh: Record<string, string> = {
   'whitelist.title': '合约白名单',
   'whitelist.subtitle': '按链管理已授权的合约和代币，作用于该链下的所有钱包。',
   'whitelist.empty': '尚未配置任何链。',
-  'whitelist.noWalletOnChain': '{chain} 上还没有钱包。请先在此链创建钱包，再管理其白名单。',
   'program.addCustomTitle': '添加自定义合约',
   'program.addressPlaceholder': '合约地址（0x…）',
   'program.labelPlaceholder': '标签',

@@ -343,7 +343,7 @@ export default function WalletDetail({ walletId, onBack }: WalletDetailProps) {
           is hidden on small screens. The panel itself surfaces the
           chain-shared nature via its own hint text. */}
       <div className="md:hidden">
-        <ProgramPanel walletId={wallet.id} chainFamily={family} chainName={wallet.chain} />
+        <ProgramPanel chainFamily={family} chainName={wallet.chain} />
       </div>
 
       {/* Danger Zone */}

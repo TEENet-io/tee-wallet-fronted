@@ -108,12 +108,11 @@ function badgeColor(hint?: string): string {
 type ActivePanel = { id: string | number; mode: 'edit' | 'view' } | null;
 
 interface ProgramPanelProps {
-  walletId: string;
   chainFamily: 'evm' | 'solana';
   chainName: string;
 }
 
-export default function ProgramPanel({ walletId, chainFamily, chainName }: ProgramPanelProps) {
+export default function ProgramPanel({ chainFamily, chainName }: ProgramPanelProps) {
   const { toast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useLanguage();
@@ -141,14 +140,14 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api<{ contracts?: AllowedContract[] }>(`/api/wallets/${walletId}/contracts`);
+      const res = await api<{ contracts?: AllowedContract[] }>(`/api/chains/${chainName}/contracts`);
       if (res.success && Array.isArray(res.contracts)) {
         setContracts(res.contracts);
       }
     } finally {
       setLoading(false);
     }
-  }, [walletId]);
+  }, [chainName]);
 
   useEffect(() => { loadContracts(); }, [loadContracts]);
 
@@ -191,7 +190,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
     try {
       const passkeyBody = await getFreshPasskeyCredential();
       if (!passkeyBody) { setRemoving(null); return; }
-      const res = await api(`/api/wallets/${walletId}/contracts/${contract.id}`, {
+      const res = await api(`/api/chains/${chainName}/contracts/${contract.id}`, {
         method: 'DELETE',
         body: JSON.stringify(passkeyBody),
       });
@@ -220,7 +219,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
     }
     setActionBusy(true);
     try {
-      const res = await api(`/api/wallets/${walletId}/contracts/${contract.id}`, {
+      const res = await api(`/api/chains/${chainName}/contracts/${contract.id}`, {
         method: 'PUT',
         body: JSON.stringify({ label: nextLabel }),
       });
@@ -258,7 +257,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
       // misleading token-shape metadata on call targets.
       if (program.symbol !== undefined) body.symbol = program.symbol;
       if (program.decimals !== undefined) body.decimals = program.decimals;
-      const res = await api(`/api/wallets/${walletId}/contracts`, {
+      const res = await api(`/api/chains/${chainName}/contracts`, {
         method: 'POST',
         body: JSON.stringify(body),
       });
@@ -302,7 +301,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
       const symbolTrimmed = newSymbol.trim();
       if (symbolTrimmed !== '') body.symbol = symbolTrimmed;
       if (decimalsNum !== undefined) body.decimals = decimalsNum;
-      const res = await api(`/api/wallets/${walletId}/contracts`, {
+      const res = await api(`/api/chains/${chainName}/contracts`, {
         method: 'POST',
         body: JSON.stringify(body),
       });
