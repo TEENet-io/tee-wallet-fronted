@@ -14,31 +14,21 @@ import ProgramPanel from '../components/wallet/ProgramPanel';
 //
 // The backend API is still /api/wallets/:id/contracts — it uses
 // wallet.Chain to scope the query. We pick any wallet belonging to the
-// selected chain to satisfy the path parameter.
+// selected chain to satisfy the path parameter, so chains without a
+// wallet show a "create a wallet first" prompt instead of the panel.
 export default function Whitelist() {
   const { wallets, chainsMap, loadWallets, getChainFamily } = useWallets();
   const { t } = useLanguage();
 
   useEffect(() => { loadWallets(); }, [loadWallets]);
 
-  // Chains the user actually has wallets on — no point showing a chain
-  // the user can't operate on.
-  const userChains = useMemo(() => {
-    const seen = new Set<string>();
-    wallets.forEach(w => seen.add(w.chain));
-    return Array.from(seen)
-      .map(name => chainsMap[name])
-      .filter(Boolean);
-  }, [wallets, chainsMap]);
-
-  const userChainsMap = useMemo(() => {
-    const map: typeof chainsMap = {};
-    userChains.forEach(c => { if (c) map[c.name] = c; });
-    return map;
-  }, [userChains]);
+  const allChains = useMemo(
+    () => Object.values(chainsMap).filter(Boolean),
+    [chainsMap],
+  );
 
   const [selectedChain, setSelectedChain] = useState<string>('');
-  const effectiveChain = selectedChain || userChains[0]?.name || '';
+  const effectiveChain = selectedChain || allChains[0]?.name || '';
 
   // Any wallet on the selected chain works — backend scopes by user+chain.
   const anchorWallet = useMemo(
@@ -60,7 +50,7 @@ export default function Whitelist() {
         </div>
       </div>
 
-      {userChains.length === 0 ? (
+      {allChains.length === 0 ? (
         <div className="rounded-2xl ghost-border bg-surface-container-low p-8 text-center">
           <p className="text-sm text-on-surface-variant">{t('whitelist.empty')}</p>
         </div>
@@ -71,19 +61,27 @@ export default function Whitelist() {
               {t('wallets.chain')}
             </label>
             <ChainSelector
-              chains={userChainsMap}
+              chains={chainsMap}
               value={effectiveChain}
               onChange={setSelectedChain}
             />
           </div>
 
-          {anchorWallet && effectiveChain && (
+          {effectiveChain && (
             <div className="pt-2">
-              <ProgramPanel
-                walletId={anchorWallet.id}
-                chainFamily={getChainFamily(anchorWallet.chain)}
-                chainName={anchorWallet.chain}
-              />
+              {anchorWallet ? (
+                <ProgramPanel
+                  walletId={anchorWallet.id}
+                  chainFamily={getChainFamily(anchorWallet.chain)}
+                  chainName={anchorWallet.chain}
+                />
+              ) : (
+                <div className="rounded-2xl ghost-border bg-surface-container-low p-8 text-center">
+                  <p className="text-sm text-on-surface-variant">
+                    {t('whitelist.noWalletOnChain').replace('{chain}', effectiveChain)}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </>

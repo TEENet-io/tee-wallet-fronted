@@ -552,7 +552,7 @@ export default function ProgramPanel({ walletId, chainFamily, chainName }: Progr
                           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
                         >
                           {actionBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
-                          {actionBusy ? t('program.editing') : t('program.edit')}
+                          {actionBusy ? t('program.editing') : t('program.save')}
                         </button>
                       </div>
                     </form>
